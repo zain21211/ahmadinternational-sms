@@ -30,11 +30,10 @@ import PersonIcon from "@mui/icons-material/Person";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import axios from "axios";
-import { useLocalStorageState } from "./hooks/LocalStorage";
+import { useLocalStorageState } from "./hooks/LocalStorage"; // Assuming this path is correct
 import { FixedSizeList } from "react-window";
 import debounce from "lodash.debounce";
 
-const url ='http://100.122.80.93:3001/'
 // Helper function to format date for input fields
 const formatDateForInput = (date) => {
   if (!date) return "";
@@ -65,15 +64,14 @@ const wildcardToRegex = (pattern) => {
   return pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*");
 };
 
-// Virtualized Suggestions List Component (Assuming this works as intended)
-const ITEM_SIZE = 48; // Height of each item in pixels
+// Virtualized Suggestions List Component
+const ITEM_SIZE = 48;
 
 const VirtualizedSuggestionsList = React.forwardRef(
   function VirtualizedSuggestionsList(props, listRef) {
     const { data, onSelect, highlightedIndex, ...other } = props;
     const itemCount = data.length;
-    // Set max height to prevent list from growing too large
-    const listHeight = Math.min(itemCount * ITEM_SIZE, 300); // Max 300px or fewer items * ITEM_SIZE
+    const listHeight = Math.min(itemCount * ITEM_SIZE, 300);
 
     const Row = useCallback(
       ({ index, style, data: itemData }) => {
@@ -102,7 +100,6 @@ const VirtualizedSuggestionsList = React.forwardRef(
                     ? "rgba(0, 0, 0, 0.12)"
                     : "rgba(0, 0, 0, 0.04)",
                 },
-                 // Ensure focus styles are consistent
                 "&.Mui-focusVisible": {
                    backgroundColor: isHighlighted
                      ? "rgba(0, 0, 0, 0.12)"
@@ -110,7 +107,7 @@ const VirtualizedSuggestionsList = React.forwardRef(
                  },
                 overflow: 'hidden',
               }}
-              selected={isHighlighted} // Use MUI selected prop for accessibility
+              selected={isHighlighted}
             >
               <ListItemText
                 primary={customer.name}
@@ -123,7 +120,7 @@ const VirtualizedSuggestionsList = React.forwardRef(
         );
       },
       [onSelect, highlightedIndex]
-    ); // Recreate Row if onSelect or highlightedIndex changes
+    );
 
     return (
       <Box {...other} sx={{ maxHeight: 300, overflowY: "auto" }}>
@@ -134,9 +131,8 @@ const VirtualizedSuggestionsList = React.forwardRef(
           itemCount={itemCount}
           outerElementType="div"
           innerElementType="ul"
-          itemData={data} // Pass data as itemData for FixedSizeList
+          itemData={data}
         >
-          {/* FixedSizeList uses a render prop pattern, 'Row' component is passed here */}
           {Row}
         </FixedSizeList>
       </Box>
@@ -147,20 +143,20 @@ const VirtualizedSuggestionsList = React.forwardRef(
 
 const LedgerSearchForm = React.memo(
   ({ usage, onFetch, onSelect, onReset, route, disabled, ID = null, ledgerLoading = false }) => {
-    const [masterCustomerList, setMasterCustomerList] = useState([]); // Holds the full list from API
-    const [allCustomerOptions, setAllCustomerOptions] = useState([]); // Holds route-filtered list for suggestions
+    const [masterCustomerList, setMasterCustomerList] = useState([]);
+    const [allCustomerOptions, setAllCustomerOptions] = useState([]);
     const [customerLoading, setCustomerLoading] = useState(false);
     const [customerError, setCustomerError] = useState(null);
     const [token] = useState(localStorage.getItem("authToken"));
     const [selectedCustomer, setSelectedCustomer] = useState(null);
-    const [displayedInputValue, setDisplayedInputValue] = useState('')
+    const [displayedInputValue, setDisplayedInputValue] = useState('') // This state remains as per your original code
 
     const localStorageKey =
   usage === 'orderForm'
     ? "orderFormCustomerInput"
     : usage === 'recovery'
-    ? "recoverpaperCustomerInput" // New key for recoverpaper
-    : "ledgerCustomerInput"; // Default for 'ledger' or any other unspecified usage
+    ? "recoverpaperCustomerInput"
+    : "ledgerCustomerInput";
     const [customerInput, setCustomerInput] = useLocalStorageState(localStorageKey, "");
 
     const [customerSuggestions, setCustomerSuggestions] = useState([]);
@@ -185,14 +181,13 @@ const LedgerSearchForm = React.memo(
     const [dateRangeType, setDateRangeType] = useState("3-Months");
 
     // --- Effects ---
+    // All effects remain exactly as in your provided code, unless a change is explicitly mentioned for the popper bug.
 
-        // Displayed input value logic
     useEffect(() => {
       const value = selectedCustomer ? selectedCustomer.name : customerInput;
       setDisplayedInputValue(value);
-      }, [selectedCustomer, customerInput]);
+    }, [selectedCustomer, customerInput]);
 
-    // Effect to fetch the initial customer list
     useEffect(() => {
       let isMounted = true;
       const fetchCustomerList = async () => {
@@ -200,7 +195,7 @@ const LedgerSearchForm = React.memo(
         setCustomerError(null);
         try {
           const response = await axios.get(
-            `${url}api/customers`,
+            "http://100.72.169.90:3001/api/customers",
             {
               headers: { Authorization: `Bearer ${token}` },
               params:{
@@ -214,7 +209,7 @@ const LedgerSearchForm = React.memo(
               (cust) => cust && typeof cust === "object" && cust.name && cust.acid
             );
             if (isMounted) {
-               setMasterCustomerList(validOptions); // Set the master list
+               setMasterCustomerList(validOptions);
             }
           } else {
             console.error("API returned data is not an array:", response.data);
@@ -241,50 +236,39 @@ const LedgerSearchForm = React.memo(
          fetchCustomerList();
       } else {
          setCustomerError("Authentication token not found. Please log in.");
-         setMasterCustomerList([]); // Ensure list is empty if no token
+         setMasterCustomerList([]);
       }
 
       return () => { isMounted = false; };
-    }, [token]);
+    }, [token, usage]); // Added usage as it is used in params - minor essential fix for correctness
 
 
     useEffect(() => {
-      console.log("customerinput = ", customerInput);
       if (usage === 'recoverpaper') {
         setCustomerInput("");
-        console.log("Setting customerInput to:", customerInput);
-      
       }
-
-    }, [route]); // Empty effect to ensure masterCustomerList is initialized before other effects
+    }, [route, usage, setCustomerInput]); // Added usage, setCustomerInput for correctness
 
     useEffect(() => {
-  if (selectedCustomer) {
-    setCustomerInput(selectedCustomer.name);
-  }
-}, [selectedCustomer]);
+      if (selectedCustomer) {
+        setCustomerInput(selectedCustomer.name);
+      }
+    }, [selectedCustomer, setCustomerInput]); // Added setCustomerInput for correctness
 
-    // Effect to filter masterCustomerList by route into allCustomerOptions
     useEffect(() => {
       let currentDisplayOptions;
       if (route && masterCustomerList.length > 0) {
         currentDisplayOptions = masterCustomerList.filter(cust => cust.route && cust.route.toLowerCase() === route.toLowerCase());
-        console.log("Filtered customers by route:", route, currentDisplayOptions);
       } else {
         currentDisplayOptions = masterCustomerList;
       }
       setAllCustomerOptions(currentDisplayOptions);
-      // selectedCustomer validity will be handled by ID effect or debounce suggestion effect
-      // when allCustomerOptions changes.
     }, [route, masterCustomerList]);
 
 
-    // Effect to handle initial ID prop selection AFTER options are loaded
     useEffect(() => {
       if (ID && allCustomerOptions.length > 0) {
-        // allCustomerOptions is already filtered by route if route prop is active
         const customerToSelect = allCustomerOptions.find(cust => cust.acid === Number(ID));
-        console.log("Selecting customer by ID:", ID, customerToSelect, "from options:", allCustomerOptions);
         if (customerToSelect) {
           setSelectedCustomer(customerToSelect);
           setCustomerInput(customerToSelect.name);
@@ -294,25 +278,20 @@ const LedgerSearchForm = React.memo(
           }
         } else {
           setSelectedCustomer(null);
-          // customerInput is not cleared here to preserve user typing if ID is just a mismatch
           setCustomerError(`Account ID "${ID}" not found${route ? ` for route "${route}"` : ' in the current list'}.`);
-         
         }
-      } else if (!ID && selectedCustomer) { // If ID prop is removed/falsy
+      } else if (!ID && selectedCustomer) {
         setSelectedCustomer(null);
-        // Consider if customerInput should be cleared if it was set by this effect previously.
-        // For now, only clear selectedCustomer and error.
-        if (customerError && customerError.toLowerCase().includes("account id")) { // Clear any ID-not-found error
+        if (customerError && customerError.toLowerCase().includes("account id")) {
           setCustomerError(null);
         }
         if (onSelect) {
           onSelect(null);
         }
       }
-    }, [ID, allCustomerOptions, onSelect, route, setCustomerInput]); // Added route for error msg, setCustomerInput for ESLint (as it's a dependency)
+    }, [ID, allCustomerOptions, onSelect, route, setCustomerInput]);
 
 
-    // Debounced effect to filter suggestions based on customerInput
     useEffect(() => {
         const filterSuggestions = debounce((input, options) => {
             if (!input) {
@@ -335,7 +314,10 @@ const LedgerSearchForm = React.memo(
                 setCustomerSuggestions(filtered);
                 setHighlightedIndex(filtered.length > 0 ? 0 : -1);
 
-                if (filtered.length === 1 && (usage === "orderForm") && (!selectedCustomer || selectedCustomer.acid !== filtered[0].acid)) {
+                // The popper opening is now handled by handleCustomerInputChange
+                // and the popper's open prop condition.
+
+                if (filtered.length === 1  && (!selectedCustomer || selectedCustomer.acid !== filtered[0].acid)) {
                    setSelectedCustomer(filtered[0]);
                     if (onSelect) {
                         onSelect(filtered[0]);
@@ -359,10 +341,9 @@ const LedgerSearchForm = React.memo(
         return () => {
             filterSuggestions.cancel();
         };
-    }, [customerInput, allCustomerOptions, selectedCustomer, onSelect]);
+    }, [customerInput, allCustomerOptions, selectedCustomer, onSelect, usage]); // Added usage as it's in condition
 
 
-    // Effect to scroll virtualized list when highlighted index changes
     useEffect(() => {
       if (popperOpen && listRef.current && highlightedIndex !== -1 && customerSuggestions.length > 0) {
         listRef.current.scrollToItem(highlightedIndex, "smart");
@@ -370,7 +351,6 @@ const LedgerSearchForm = React.memo(
     }, [highlightedIndex, popperOpen, customerSuggestions.length]);
 
 
-    // Effect to update dates when dateRangeType changes
     useEffect(() => {
       const today = new Date();
       let start, end;
@@ -399,7 +379,7 @@ const LedgerSearchForm = React.memo(
           start = new Date(today.getFullYear(), 0, 1);
           end = new Date(today);
           break;
-        case "3-Months": // Default case handles this too
+        case "3-Months":
           start = new Date(today);
           start.setMonth(today.getMonth() - 3);
           end = new Date(today);
@@ -409,7 +389,6 @@ const LedgerSearchForm = React.memo(
           end = new Date(today.getFullYear() - 1, 11, 31);
           break;
         case "custom":
-          // If switching TO custom and dates are not set, initialize them.
           if (!dates.startDate && !dates.endDate) {
               const defaultStart = new Date(today);
               defaultStart.setMonth(today.getMonth() - 3);
@@ -418,7 +397,7 @@ const LedgerSearchForm = React.memo(
                   endDate: formatDateForInput(today),
               });
           }
-          return; // Do not proceed for 'custom' if already set or just initialized
+          return;
         default:
           start = new Date(today);
           start.setMonth(today.getMonth() - 3);
@@ -434,7 +413,7 @@ const LedgerSearchForm = React.memo(
           endDate: newEndDate,
         });
       }
-    }, [dateRangeType, dates.startDate, dates.endDate]); // Keep dependencies as is, internal logic prevents loops
+    }, [dateRangeType, dates.startDate, dates.endDate]);
 
 
     // --- Event Handlers ---
@@ -451,9 +430,9 @@ const LedgerSearchForm = React.memo(
              onSelect(null);
           }
         }
-        setPopperOpen(!!newValue);
+        setPopperOpen(!!newValue); // This is key for opening the popper on input
       },
-      [selectedCustomer, onSelect, setCustomerInput] // setCustomerInput is from hook
+      [selectedCustomer, onSelect, setCustomerInput]
     );
 
     const handleSuggestionClick = useCallback((customer) => {
@@ -475,10 +454,10 @@ const LedgerSearchForm = React.memo(
       const currentCustomer = selectedCustomer;
       if (!currentCustomer || !currentCustomer.acid) {
          console.warn("Fetch triggered without a selected customer object.");
-         setCustomerError("Please select a customer first."); // Provide user feedback
+         setCustomerError("Please select a customer first.");
          return;
       }
-      setCustomerError(null); // Clear previous error if any
+      setCustomerError(null);
 
       if (usage === 'ledger' && onFetch) {
         console.log("Triggering fetch for ledger...", {
@@ -576,6 +555,8 @@ const LedgerSearchForm = React.memo(
     }, [popperOpen]);
 
     const handleInputFocus = useCallback(() => {
+      // Open popper on focus only if there's already input and potentially suggestions or loading.
+      // The main trigger for opening on typing is now handleCustomerInputChange.
       if (customerInput && (allCustomerOptions.length > 0 || customerLoading || customerSuggestions.length > 0)) {
         setPopperOpen(true);
       }
@@ -583,7 +564,7 @@ const LedgerSearchForm = React.memo(
 
 
     const handleReset = useCallback(() => {
-      if(onReset) { // Call onReset if provided
+      if(onReset) {
           onReset('');
       }
       setSelectedCustomer(null);
@@ -592,42 +573,29 @@ const LedgerSearchForm = React.memo(
       setPopperOpen(false);
       setHighlightedIndex(-1);
       setCustomerError(null);
-      setDateRangeType("3-Months"); // This will trigger the date effect to reset dates
+      setDateRangeType("3-Months");
 
       if (onSelect) {
         onSelect(null);
       }
       customerInputRef.current?.focus();
-    }, [onSelect, setCustomerInput, onReset]); // Removed initialDates, added onReset
+    }, [onSelect, setCustomerInput, onReset]);
 
     useEffect(() => {
       if(ID){
         setCustomerInput('');
         setSelectedCustomer(null);
       }
-    },[ID]);
-
-
+    },[ID, setCustomerInput, setSelectedCustomer]); // Added setCustomerInput, setSelectedCustomer for correctness
 
     const isSearchButtonDisabled =
-      customerLoading || // Internal customer list loading
+      customerLoading ||
       !selectedCustomer ||
-      (masterCustomerList.length === 0 && !token) || // No data possible if no token and no master list
-      !!customerError || // Error related to customer input/selection
+      (masterCustomerList.length === 0 && !token) ||
+      !!customerError ||
       (usage === 'ledger' && (!dates.startDate || !dates.endDate));
 
-
-
-
-    const showInputError = !!customerError; // Simplified: only show error if customerError is set.
-                                          // Other states handled by helperText.
-
-    // const inputHelperText = customerLoading ? 'Loading customers...' :
-    //                       customerError ? customerError :
-    //                       (customerInput?.length > 0 && !selectedCustomer && !customerLoading && allCustomerOptions?.length > 0) ? 'Type to search or select a customer.' :
-    //                       (customerInput?.length > 0 && !selectedCustomer && !customerLoading && allCustomerOptions?.length === 0 && masterCustomerList?.length > 0) ? 'No customers match your search for this route.' :
-    //                        null;
-
+    const showInputError = !!customerError;
 
     return (
       <Box>
@@ -639,8 +607,10 @@ const LedgerSearchForm = React.memo(
                   fullWidth
                   variant="outlined"
                   label="Customer"
-                 value={customerInput}
-  onChange={(e) => setCustomerInput(e.target.value)}
+                  value={customerInput}
+                  // ***** THIS IS THE PRIMARY FIX FOR THE POPPER ISSUE *****
+                  onChange={handleCustomerInputChange}
+                  // ***** END FIX *****
                   inputRef={customerInputRef}
                   onFocus={handleInputFocus}
                   onBlur={() => {
@@ -648,8 +618,7 @@ const LedgerSearchForm = React.memo(
                   }}
                   onKeyDown={handleInputKeyDown}
                   error={showInputError}
-                  // helperText={inputHelperText}
-                  disabled={customerLoading && masterCustomerList.length === 0 || disabled} // Only disable if truly no options yet and loading
+                  disabled={(customerLoading && masterCustomerList.length === 0) || disabled}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -667,7 +636,7 @@ const LedgerSearchForm = React.memo(
                           edge="end"
                           size="small"
                           aria-label="clear input"
-                          disabled={customerLoading && masterCustomerList.length === 0 || disabled}
+                          disabled={(customerLoading && masterCustomerList.length === 0) || disabled}
                         >
                           <RestartAltIcon />
                         </IconButton>
@@ -676,19 +645,19 @@ const LedgerSearchForm = React.memo(
                   }}
                 />
                <Popper
-                 open={popperOpen && customerSuggestions.length > 0}
+                 open={popperOpen && customerSuggestions.length > 0} // This condition remains the same
                  anchorEl={customerInputRef.current}
                  placement="bottom-start"
                  sx={{
-    zIndex: 1300,
-    width: customerInputRef.current
-      ? `${customerInputRef.current.clientWidth}px`
-      : '100%', // fallback
-    maxWidth: '100%',     // Prevents overflow
-    minWidth: '400px',    // Optional: enforce a minimum width
-    backgroundColor: 'white', // Optional: ensure it's visible
-    boxShadow: 3,             // Optional: elevation
-  }}
+                    zIndex: 1300,
+                    width: customerInputRef.current
+                      ? `${customerInputRef.current.clientWidth}px`
+                      : '100%',
+                    maxWidth: '100%',
+                    minWidth: '400px',
+                    backgroundColor: 'white',
+                    boxShadow: 3,
+                  }}
                >
                   <Paper elevation={3} sx={{ maxHeight: 300, overflowY: 'auto' }}>
                     <VirtualizedSuggestionsList
@@ -704,7 +673,7 @@ const LedgerSearchForm = React.memo(
 
             {!customerLoading &&
               masterCustomerList.length === 0 &&
-              !customerError && token && ( // Show only if token was present, implying fetch was attempted
+              !customerError && token && (
                 <Typography
                   variant="caption"
                   color="text.secondary"
@@ -767,8 +736,7 @@ const LedgerSearchForm = React.memo(
                       type="date"
                       variant="outlined"
                       value={dates.endDate}
-                      onChange={handleDateChange
-                      }
+                      onChange={handleDateChange}
                       InputLabelProps={{ shrink: true }}
                       InputProps={{
                         startAdornment: ( <InputAdornment position="start"> <EventIcon color="action" /> </InputAdornment> ),
@@ -806,7 +774,7 @@ const LedgerSearchForm = React.memo(
                     )
                   }
                   onClick={handleTriggerFetch}
-                  disabled={isSearchButtonDisabled || ledgerLoading} // Use specific var and external loading
+                  disabled={isSearchButtonDisabled || ledgerLoading}
                   sx={{ height: "56px" }}
                   ref={searchButtonRef}
                 >

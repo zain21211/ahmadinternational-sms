@@ -27,8 +27,7 @@ import {
   Container,
 } from "@mui/material";
 
-const url ='http://100.122.80.93:3001/api'
-
+const url = "http://100.72.169.90:3001/api"; // Update with your actual API URL
 
 const LabelWithImage = ({ src, label }) => (
   <Box display="flex" alignItems="center" gap={1}>
@@ -143,6 +142,7 @@ const RecoveryPaper = () => {
   const [totalMeezanBank, setTotalMeezanBank] = useState(0);
 
   const cashInputRef = useRef(null);
+  const acidInputRef = useRef(null);
   // const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const isOnline = useRealOnlineStatus();
@@ -303,13 +303,11 @@ const RecoveryPaper = () => {
       timestamp: new Date().toISOString(),
       status: false
     };
-
-    console.log("New entry to be added:", newEntry);
+    setIsLoading(true)
     if (isOnline){
-console.log("status: ", isOnline)
     try {
-      console.log("Adding new entry in the make cash");
       let success = false;
+      
        success =  await makeCashEntry(newEntry);
     
       if (success) {
@@ -327,6 +325,7 @@ console.log("status: ", isOnline)
     }else{
       setEntries((prevEntries) => [...prevEntries, newEntry]); // Save locally on error
     }
+    setIsLoading(false)
 
     setCashAmount("");
     setJazzcashAmount("");
@@ -339,6 +338,7 @@ console.log("status: ", isOnline)
     setCustomerName("");
     setCustomerInput(''); 
     setSelectedCustomer(null);
+    acidInputRef?.current?.focus();
 
     console.log("Entry added, resetting input fields. the customer input is:", customerName);
     // Consider focusing logic, e.g., back to account ID input or LedgerSearchForm
@@ -357,17 +357,15 @@ console.log("status: ", isOnline)
 
     let status = true;
 
-    console.log('Posting entries:', entriesToPost);
 
     for (const [method, amount] of entriesToPost) {
       const payload = {
-        paymentMethod: method === 'crownWallet' ? 'crownone' : method, // Adjusted for API compatibility
+        paymentMethod: method === 'crownWallet' ? 'crownone' : method === 'meezanBank'? 'mbl' : method, // Adjusted for API compatibility
         custId: id,
         receivedAmount: amount,
         userName,
       };
 
-      console.log(`Posting ${method} entry:`, payload);
 
       try {
         const response = await axios.post(`${url}/cash-entry`, payload);
@@ -382,7 +380,6 @@ console.log("status: ", isOnline)
       }
     }
 
-    console.log(`✅ Posting completed for customer ${id}. Success: ${status}`);
     return status;
 
   } catch (error) {
@@ -549,6 +546,7 @@ useEffect(() => {
       label="Customer Account ID"
       variant="outlined"
       fullWidth
+      inputRef={acidInputRef}
       onFocus={(e) => e.target.select()}
       value={acidInput}
       onChange={(e) => setAcidInput(e.target.value)}
@@ -688,13 +686,11 @@ useEffect(() => {
       <Box
         sx={{ mt: 3, pt: 2, borderTop: "1px solid #eee", textAlign: "right" }}
       >
-      <Typography variant="h4" gutterBottom>
-        Overall Total Received: <strong>{formatCurrency(totalAmount.toFixed(0))}</strong>
-      </Typography>
+      
 
       <Box sx={{ mt: 1, textAlign: "right" }}>
         {totalCash > 0 && (
-          <Typography variant="h5">
+          <Typography variant="h4"sx={{fontWeight:'bold'} }>
             Total Cash: <strong>{formatCurrency(totalCash.toFixed(0))}</strong>
           </Typography>
         )}
@@ -719,6 +715,9 @@ useEffect(() => {
           </Typography>
         )}
       </Box>
+      <Typography variant="h6" gutterBottom>
+        Overall Total Received: <strong>{formatCurrency(totalAmount.toFixed(0))}</strong>
+      </Typography>
     </Box>
 
       <Typography variant="h6" component="h3" gutterBottom sx={{ mt:2 }}>
@@ -749,7 +748,10 @@ useEffect(() => {
               <ListItem
                 key={`${entry.timestamp}-${index}-${entry.id}`} // Improved key
                 divider={index < entries.length - 1}
-                onClick={() => handleSyncEntries(entry)}
+                onClick={() => {
+                  if (entry.status === false)
+                    handleSyncEntries(entry)
+                  }}
                 sx={{
                   paddingY: "4px", // Adjusted padding
                   paddingX: "0px",

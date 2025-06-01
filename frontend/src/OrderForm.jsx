@@ -78,9 +78,6 @@ function makeWildcardRegex(filter, _for = "") {
   }
 }
 
-const url ='http://100.122.80.93:3001'
-
-
 const OrderForm = () => {
   console.log("OrderForm rendering or re-rendering");
 
@@ -188,7 +185,7 @@ const OrderForm = () => {
     return d.toISOString().split("T")[0];
   }, [today]);
 
-  const API_BASE_URL = `${url}/api`;
+  const API_BASE_URL = "http://100.72.169.90:3001/api";
 
   // --- Debounced Update Functions ---
   const debouncedSetCompanyFilter = useCallback(
@@ -228,7 +225,7 @@ const OrderForm = () => {
   //   const responce
   // }
   // --- Effects ---
-
+const handlePrint =()=>{}
   // Effect to fetch customer balance and overdue based on selected customer and date
   useEffect(() => {
     const fetchCustomerFinancials = async () => {
@@ -1744,7 +1741,7 @@ const OrderForm = () => {
             variant="contained"
             color="primary"
             size="large"
-            //onClick={handlePrint}
+            onClick={handlePrint}
             disabled={
               loading || // Disable during loading/posting
               initialDataLoading || // Disable during initial data fetch

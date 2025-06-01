@@ -75,9 +75,7 @@ const AppLayout = () => {
 };
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
     <BrowserRouter>
       <AppLayout />
     </BrowserRouter>
-  </StrictMode>
 );

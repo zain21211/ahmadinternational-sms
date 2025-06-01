@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, Suspense, } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 const DataTable = React.lazy(() => import("./table"));
-import { useParams } from 'react-router-dom';
+import { useParams } from "react-router-dom";
 import TextInput from "./Textfield";
 import {
   Container,
@@ -28,6 +28,8 @@ import {
   Print,
   SignalCellularNull,
 } from "@mui/icons-material";
+import CircularProgress from "@mui/material/CircularProgress";
+import Skeleton from "@mui/material/Skeleton";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import axios from "axios";
 
@@ -55,7 +57,16 @@ const productDetail = [
   { label: "Amount", size: 2 },
 ];
 
-const invoiceAPI = 'http://100.72.169.90:3001/api/invoices';
+const invoiceAPI = "http://100.72.169.90:3001/api/invoices";
+
+const formatCurrency = (value) => {
+  const num = Number(value);
+  if (isNaN(num)) return "0"; // Returning "0" for NaN as requested
+  return num.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
+};
 
 // invoice model
 const BillingComponent = ({ name = "INVOICE" }) => {
@@ -65,22 +76,19 @@ const BillingComponent = ({ name = "INVOICE" }) => {
   const [products, setProducts] = useState([]);
   const [formattedDate, setFormattedDate] = useState("");
   const buttonRef = useRef(null);
-  const {id} = useParams();
+  const { id } = useParams();
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
   });
-  
 
   useEffect(() => {
     // console.log("getting the invoice");
     const getInvoice = async () => {
       console.time("getting the invoice with # ", id);
-      const response = await axios.get(
-        `${invoiceAPI}/${id}`,{
-          params: {user: user.username, type: user.userType}
-        }
-      );
+      const response = await axios.get(`${invoiceAPI}/${id}`, {
+        params: { user: user.username, type: user.userType },
+      });
 
       console.log("invoice data:", response.data);
       await setInvoice(response.data);
@@ -116,44 +124,58 @@ const BillingComponent = ({ name = "INVOICE" }) => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Container disableGutters
-  maxWidth={false}
-  sx={{ overflowX: "hidden"
-  }}>
-        <Paper elevation={3} sx={{ p: 0,m:0, width: "100%" }}>
+      <Container
+        disableGutters
+        maxWidth={false}
+        sx={{ overflowX: "hidden", p: 0, m: 0 }}
+      >
+        <Paper elevation={3} sx={{ p: 0, m: 0, width: "100%" }}>
           <Grid
             container
             justifyContent="space-between"
             alignItems="center"
-            sx={{ mb: 0}}
+            sx={{ mb: 0 }}
           >
             <Grid item sx={{ width: "15%" }}>
               <Typography variant="h5" fontWeight="bold" color="primary">
                 {name}
               </Typography>
               <Typography variant="subtitle2" color="text.secondary">
-                # {customer?.InvoiceNumber || "not yet"}
+                # {customer?.InvoiceNumber}
+                {!customer?.InvoiceNumber && (
+                  <Skeleton height={30} width="90%" />
+                )}
               </Typography>
             </Grid>
-            <Grid item textAlign="center" sx={{ width: "30%", fontSize:{xs:".08rem"}}}>
-              <Typography variant="h5" fontWeight="bold">
-                AHMAD INTERNATIONAL
-              </Typography>
-            </Grid>
-            <Grid item xs={12} sx={{ width: {xs:"25%"} }}>
-              <TextField
-                size="small"
-                // type="date"
-                variant="outlined"
-                InputLabelProps={{ shrink: false }}
-                value={
-                  customer?.InvoiceDate
-                    ? new Date(customer.InvoiceDate)
-                        .toLocaleDateString("en-GB")
-                        .replace(/\//g, "-")
-                    : ""
-                }
-              />
+
+            <Grid item xs={12} sx={{ width: { xs: "20%" } }}>
+<TextField
+  size="small"
+  label="Date"
+  InputLabelProps={{
+    shrink: true,
+    sx: {
+      backgroundColor: "white",
+    },
+  }}
+  value={
+    customer?.InvoiceDate
+      ? new Date(customer.InvoiceDate)
+          .toLocaleDateString("en-GB")
+          .replace(/\//g, "-")
+      : ""
+  }
+  sx={{
+    '& .MuiOutlinedInput-root': {
+      border: "1px solid black",
+      borderRadius: "1rem",
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      border: 'none', // optional: remove double-border effect
+    },
+    outline: "none", // This has no visible effect here
+  }}
+/>
             </Grid>
           </Grid>
 
@@ -167,7 +189,7 @@ const BillingComponent = ({ name = "INVOICE" }) => {
             display={"flex"}
             flexDirection={"row"}
             alignContent={"center"}
-            sx={{ mb: 1, width: "100%" }}
+            sx={{ marginY: 4, width: "100%" }}
           >
             <Grid
               item
@@ -176,36 +198,55 @@ const BillingComponent = ({ name = "INVOICE" }) => {
               justifyContent="space-between"
               alignItems="center"
             >
-
               <Typography
-                variant="h6"
+                variant="h5"
                 // fontWeight="bold"
                 alignSelf="center"
-
               >
-                <b>CUSTOMER NAME: </b>{customer?.CustomerName}
+                <b>CUSTOMER NAME: </b>
+                {customer?.CustomerName}
+                {!customer?.CustomerName && (
+                  <Skeleton height={30} width="90%" />
+                )}
               </Typography>
-              </Grid>
-
+            </Grid>
           </Grid>
-
-          <Divider sx={{ mb: 4 }} />
 
           {/* Products List Table */}
           <Grid item xs={12} sx={{ marginTop: 3 }}>
-            <Suspense fallback={<SignalCellularNull />}>
+            <Suspense
+              fallback={
+                <Box p={2}>
+                  <Skeleton height={30} width="90%" />
+                  <Skeleton height={30} width="70%" />
+                  <Skeleton height={30} width="80%" />
+                </Box>
+              }
+            >
               <DataTable
                 data={products ?? []} // Ensure items is always an array
                 columns={productDetail.map((field) => ({
                   id: field.label.toLowerCase(),
                   label: field.label,
                   align: "center",
-                  width: field.label === "Product" ? "25%" : field.label === "FOC" ? "2%" : field.label === "Price" ? "10%" : field.label === "Amount" ? "5%" : "5%", // Reduced Amount column width to 8%
+                  width:
+                    field.label === "Product"
+                      ? "25%"
+                      : field.label === "FOC"
+                      ? "2%"
+                      : field.label === "Price"
+                      ? "10%"
+                      : field.label === "Amount"
+                      ? "5%"
+                      : "5%", // Reduced Amount column width to 8%
                   minWidth: field.label === "Product" ? 178 : "5%", // Adjusted minimum width for Product column
                   render: (value, row) => {
                     let displayValue = "";
+                    if (!row) <Skeleton height={30} width="80%" />;
                     if (field.label === "Product") {
-                      displayValue = `${row.Product?.toUpperCase() || "error"} - ${row.Company?.toUpperCase() || ""}`;
+                      displayValue = `${
+                        row.Product?.toUpperCase() || "error"
+                      } - ${row.Company?.toUpperCase() || ""}`;
                     } else if (field.label === "B.Q") {
                       displayValue = row.BQ || "0";
                     } else if (field.label === "FOC") {
@@ -217,7 +258,7 @@ const BillingComponent = ({ name = "INVOICE" }) => {
                     } else if (field.label === "D%") {
                       displayValue = row.Disc2 || "0";
                     } else if (field.label === "Amount") {
-                      displayValue = row.Amount || "0";
+                      displayValue = formatCurrency(row.Amount) || "0";
                     }
 
                     return (
@@ -225,7 +266,9 @@ const BillingComponent = ({ name = "INVOICE" }) => {
                         variant="standard"
                         value={displayValue}
                         type={
-                          ["Quantity", "Price", "Discount"].includes(field.label)
+                          ["Quantity", "Price", "Discount"].includes(
+                            field.label
+                          )
                             ? "number"
                             : "text"
                         }
@@ -267,16 +310,17 @@ const BillingComponent = ({ name = "INVOICE" }) => {
 
           {/* Totals and Notes */}
           <Box sx={{ mt: 3 }}>
-            <Typography textAlign={"right"}>
-              Total: {customer.InvoiceAmount}
+            <Typography variant="h5" textAlign={"right"}>
+              <strong>Total:</strong> {formatCurrency(customer.InvoiceAmount)}
             </Typography>
           </Box>
 
           {/* Notes Section */}
           <TextField
-            // label="Additional Notes"
+            label="Additional Notes"
             variant="outlined"
-            sx={{ mt: 4 }}
+            InputLabelProps={{ shrink: true }}
+            sx={{ marginY: 4 }}
             value={customer.Description}
             onChange={(e) =>
               setInvoice((prev) => ({

@@ -198,7 +198,12 @@ const Header = () => {
             "2px -2px 4px rgba(0, 0, 0, 0.1), 2px 2px 4px rgba(0, 0, 0, 0.1)",
         }}
       >
-        <Toolbar>
+        <Toolbar
+        sx={{
+          m:0,
+          minHeight:"48px"
+        }}
+        >
           <IconButton
             size="large"
             edge="start"

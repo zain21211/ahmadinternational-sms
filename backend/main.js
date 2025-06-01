@@ -18,6 +18,7 @@ const port = 3001;
 // Middleware
 app.use(cors());
 
+
 app.use(bodyParser.json());
 app.use(express.static(__dirname)); // For serving frontend
 

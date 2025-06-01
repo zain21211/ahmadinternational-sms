@@ -32,8 +32,6 @@ const formatCurrency = (value) => {
   });
 };
 
-const url ='http://100.122.80.93:3001/'
-
 
 // Base column definitions (used for md and larger screens)
 // NOTE: ID "Total" vs Label "Balance", fixed/minWidths are kept as per your request for the BASE definition
@@ -227,9 +225,8 @@ const Ledger = () => {
     setSummary({ totalDebit: 0, totalCredit: 0, netBalance: 0 }); // Reset summary immediately
 
     try {
-      const url1 = `${url}ledger`;
-      
-      const response = await axios.get(url1, {
+      const url = `http://100.72.169.90:3001/ledger`;
+      const response = await axios.get(url, {
         params: { acid, startDate, endDate },
         timeout: 15000, // Add a 15-second timeout for the request
       });
@@ -249,7 +246,7 @@ const Ledger = () => {
           const debit = Number(item.Debit || 0);
           const credit = Number(item.Credit || 0);
 
-          balance += credit - debit; // Running balance updates (Credit adds, Debit subtracts)
+          balance += debit - credit; // Running balance updates (Credit adds, Debit subtracts)
 
           totalDebit += debit; // Accumulate total debit
           totalCredit += credit; // Accumulate total credit
@@ -266,7 +263,7 @@ const Ledger = () => {
         });
 
         // Calculate net balance from accumulated totals
-        const netBalance = totalCredit - totalDebit;
+        const netBalance = totalDebit - totalCredit;
 
         const newSummary = {
           totalDebit,
@@ -275,15 +272,15 @@ const Ledger = () => {
         };
 
         setSummary(newSummary); // Set the summary state
-        setRows(processedData); // Set the processed rows state (including running balance in "Total")
         console.log("Fetched and processed ledger data:", processedData);
-        console.log("Calculated summary:", newSummary);
 
 
         // Save to localStorage for *any* successful fetch, regardless of params source
         localStorage.setItem("ledgerRows", JSON.stringify(processedData));
         localStorage.setItem("ledgerSummary", JSON.stringify(newSummary));
         localStorage.setItem("ledgerSearchAttempted", "true"); // Indicate a search was attempted and successful
+
+        setRows(processedData)
 
       } else {
         setRows([]); // Clear rows if data format is unexpected

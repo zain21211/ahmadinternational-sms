@@ -13,6 +13,23 @@ const CashEntryController = {
   insertEntry: async (req, res) => {
     const { paymentMethod, custId, receivedAmount, userName } = req.body;
     const date = req.body.date ? new Date(req.body.date) : new Date();
+<<<<<<< HEAD
+=======
+
+    // Format to "YYYY-MM-DD HH:mm:ss" in 24-hour format
+const pad = (n) => n.toString().padStart(2, '0');
+
+const year = date.getFullYear();
+const month = pad(date.getMonth() + 1); // Months are 0-based
+const day = pad(date.getDate());
+const hours = pad(date.getHours());     // 24-hour format
+const minutes = pad(date.getMinutes());
+const seconds = pad(date.getSeconds());
+
+const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+
+console.log(formattedDateTime)
+>>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
     
     if (!paymentMethod || !custId || !receivedAmount || !userName) {
       return res.status(400).json({ error: "All fields are required." });
@@ -49,7 +66,11 @@ const CashEntryController = {
         .input("credit", sql.Decimal(18, 2), receivedAmount)
         .input("narration1", sql.VarChar, narration)
         .input("entryBy1", sql.VarChar, userName)
+<<<<<<< HEAD
         .input("entryDateTime1", sql.DateTime, new Date())
+=======
+        .input("entryDateTime1", sql.DateTime, formattedDateTime)
+>>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
         .query(`
           INSERT INTO ledgers (date, type, doc, acid, credit, NARRATION, EntryBy, EntryDateTime)
           VALUES (@date1, @type1, @doc1, @acid1, @credit, @narration1, @entryBy1, @entryDateTime1)

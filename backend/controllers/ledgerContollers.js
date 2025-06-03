@@ -36,7 +36,6 @@ const ledgerControllers = {
       openingDate.setDate(openingDate.getDate() - 1);
 
       // Log request parameters
-      console.log('Ledger request params:', { acid, startDate, endDate, narration, type, doc, credit, statusMatch });
 
       const sql = `
         SELECT *,
@@ -92,7 +91,6 @@ const ledgerControllers = {
       request.input('credit', mssql.NVarChar, credit);
       request.input('statusMatch', mssql.NVarChar, statusMatch);
 
-      console.log('Executing SQL query:', sql);
 
       const result = await request.query(sql);
 
@@ -101,7 +99,6 @@ const ledgerControllers = {
         return res.status(200).json([]);
       }
 
-      console.log('Ledger data retrieved (first 2 rows):', result.recordset.slice(0, 2));
 
       res.status(200).json(result.recordset);
     } catch (err) {

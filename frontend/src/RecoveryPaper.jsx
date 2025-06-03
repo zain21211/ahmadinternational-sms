@@ -126,6 +126,14 @@ const RecoveryPaper = () => {
     "recoveryPaperMeezanBankAmount",
     ""
   );
+  const [balance, setBalance] = useLocalStorageState(
+    "recoveryBalance",
+    ""
+  );const [remainingBalance, setRemainingBalance] = useLocalStorageState(
+    "recoveryRemainingBalance",
+    ""
+  );
+
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [customerName, setCustomerName] = useState("");
@@ -140,7 +148,7 @@ const RecoveryPaper = () => {
   const [totalEasypaisa, setTotalEasypaisa] = useState(0);
   const [totalCrownWallet, setTotalCrownWallet] = useState(0);
   const [totalMeezanBank, setTotalMeezanBank] = useState(0);
-
+const [loading, setLoading] = useState(false)
   const cashInputRef = useRef(null);
   const acidInputRef = useRef(null);
   // const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -171,6 +179,25 @@ const RecoveryPaper = () => {
     }
   }, [accountID]);
 
+ useEffect(() => {
+
+  const cleanNumber = (val) => Number(val?.toString().replace(/[^0-9.-]+/g, "")) || 0;
+
+  const numericBalance = cleanNumber(balance) || 0;
+  const numericCash = cleanNumber(cashAmount) || 0;
+  const numericJazzcash = cleanNumber(jazzcashAmount) || 0;
+  const numericMeezan = cleanNumber(meezanBankAmount) || 0;
+  const numericCrown = cleanNumber(crownWalletAmount) || 0;
+  const numericEasy = cleanNumber(easypaisaAmount) || 0;
+
+  const totalAmount = numericBalance - (numericCash + numericJazzcash + numericMeezan + numericCrown+ numericEasy);
+
+  console.log("The total amount is", totalAmount);
+
+  setRemainingBalance(formatCurrency(Math.round(totalAmount)));
+}, [balance, cashAmount, jazzcashAmount, meezanBankAmount, crownWalletAmount, easypaisaAmount]);
+
+
   const handleReset = useCallback(() => {
     setAccountID("");
   }, [setAccountID]);
@@ -187,9 +214,76 @@ const RecoveryPaper = () => {
     [setAccountID]
   );
 
+    useEffect(() => {
+    const fetchCustomerFinancials = async () => {
+      if (!selectedCustomer || !selectedCustomer.acid) {
+        console.log("No customer selected for financial fetch.");
+        setBalance(null);
+        // setOverDue(null);
+        return;
+      }
+
+      setLoading(true); // Set loading specifically for this fetch
+      setError(null); // Clear previous errors
+
+      try {
+        // Assuming balance API takes acid and date (YYYY-MM-DD format)
+        const responseBal = await axios.get(`${url}/balance`, {
+          params: {
+            acid: selectedCustomer.acid,
+            date: new Date(), // selectedDate is already YYYY-MM-DD
+          },
+          // headers: { Authorization: `Bearer ${token}` }, // Add token
+        });
+        console.log("Customer balance response:", responseBal.data);
+        const { balance } = responseBal.data;
+        console.log("THE BALACE IS ", balance)
+        setBalance(formatCurrency(Math.round(balance)));
+        // setBalance(balance)
+
+        // // Assuming overdue API takes acid and date (YYYY-MM-DD format)
+        // const responseOver = await axios.get(
+        //   `${API_BASE_URL}/balance/overdue`,
+        //   {
+        //     params: {
+        //       acid: selectedCustomer.acid,
+        //       date: selectedDate, // selectedDate is already YYYY-MM-DD
+        //     },
+        //     headers: { Authorization: `Bearer ${token}` }, // Add token
+        //   }
+        // );
+
+        // console.log("Customer overdue response:", responseOver.data);
+    //     const { overDue } = responseOver.data;
+    //     setOverDue(formatCurrency(Math.round(overDue)));
+    //   } catch (err) {
+    //     console.error("Error fetching customer financials:", err);
+    //     setError(
+    //       `Failed to load customer financials. ${
+    //         err.response?.data?.message || err.message
+    //       }`
+    //     );
+        // setBalance(null);
+    //     setOverDue(null);
+      } finally {
+    //     // Only turn off loading if *this* fetch is complete
+    //     // Be careful if other operations also set 'loading'
+        setLoading(false);
+      }
+    };
+
+    // Fetch whenever selectedCustomer or selectedDate changes
+    fetchCustomerFinancials();
+  }, [selectedCustomer]); // Added dependencies
+
+  
   useEffect(() => {
     setAcidInput(accountID);
   }, [accountID]);
+
+   useEffect(() => {
+    console.log("the new balance ", balance)
+  }, [balance]);
 
     // Debounced update of accountID
   useEffect(() => {
@@ -589,6 +683,52 @@ useEffect(() => {
                 )}
               </>
             )}
+           {/* Show BALANCE and REMAINING BALANCE once */}
+  <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" alignItems={"center"} gap={2} mt={2}>
+            <TextField
+            label="description"
+            sx={{gridColumn:{xs:"span 2"}}}
+            />
+{balance !== null && (
+        
+  <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gridColumn="span 2" alignItems={"center"} gap={2}>
+    <TextField
+      label="Balance"
+      type="string"
+      value={balance}
+      disabled
+      onFocus={(e) => e.target.select()}
+      InputLabelProps={{ shrink: true }}
+      sx={{
+        gridColumn:{xs:"span 1"},
+        width: { xs: "100%", sm: "150px" },
+        "& .Mui-disabled": {
+          fontWeight: "bold",
+          textAlign: "right",
+          WebkitTextFillColor: "black !important",
+        },
+      }}
+    />
+    <TextField
+      label="Remaining"
+      type="string"
+      value={remainingBalance}
+      disabled
+      onFocus={(e) => e.target.select()}
+      InputLabelProps={{ shrink: true }}
+      sx={{
+        width: { xs: "100%", sm: "150px" },
+        "& .Mui-disabled": {
+          fontWeight: "bold",
+          textAlign: "right",
+          WebkitTextFillColor: "black !important",
+        },
+      }}
+    />
+  </Box>
+  )}
+  </Box>
+
           </Box>
           )}
         </Box>

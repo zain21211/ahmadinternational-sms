@@ -4,7 +4,6 @@ const dbConnection = require('../database/connection');
 const getApplicableScheme = {
   getOne: async (req, res) => {
   const { productCode, orderQty, date } = req.query;
-  console.log("params: ", productCode, orderQty, date)
 
 //   if (!productCode || !orderQty || !date) {
 //     return res.status(400).json({
@@ -52,7 +51,6 @@ const getApplicableScheme = {
 
 getAll:async (req, res) => {
   const { productCode, date } = req.query;
-  console.log("params: ", productCode, date)
 
 //   if (!productCode || !orderQty || !date) {
 //     return res.status(400).json({

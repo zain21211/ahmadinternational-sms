@@ -63,7 +63,6 @@ const type = req.query.type;
 const isAdmin = type && type.toLowerCase() === "admin";
 
 
-  console.log("Invoice ID:", inv); // Log the invoice ID for debugging
 
   const queryCustomer = `
   SELECT 

@@ -3,11 +3,9 @@ const dbConnection = require('../database/connection');
 
 const productControllers = {
 getProducts: async (req, res) => {
-  console.log("ENTERED IN THE PRODUCTS")
     // const { company = '', category = '', name = '' } = req.query;
     try {
       pool = await dbConnection();
-  console.log("QUEYING IN THE PRODUCTS")
 
       const result = await pool.request()
         // .input('company', sql.NVarChar, `%${company}%`)
@@ -20,7 +18,6 @@ ORDER BY Name;
 
         `);
       res.json(result.recordset);
-      // console.log("kick: ", result.recordset.filter(p => p.Company === "FIT-O" && p.Name.toLowerCase() === "kick" && p.Category.toLowerCase() === "euro"))
 
     } catch (error) {
       console.log("eror in the product api")

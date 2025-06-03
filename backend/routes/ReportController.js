@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 // Replace with your ASP.NET Crystal Report API base URL
-const REPORT_API_URL = 'http://localhost:44307/api/report/generate'; // Change port if needed
+const REPORT_API_URL = 'http//localhost:44307/api/report/generate'; // Change port if needed
 
 /**
  * Sends data to the .NET API to generate a PDF Crystal Report and returns it to the frontend
@@ -18,6 +18,9 @@ const generateReport = async (req, res) => {
         }; // Fallback parameters
     // }
 
+
+
+    
   try {
     const response = await axios.post(
       REPORT_API_URL,

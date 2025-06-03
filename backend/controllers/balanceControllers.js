@@ -4,7 +4,6 @@ const dbConnection = require("../database/connection"); // Import your database 
 const BalanceController = {
   getBalance: async (req, res) => {
     const { acid, date } = req.query; // get from query parameters
-    console.log("date: ", date)
 
     if (!acid || !date) {
       return res.status(400).json({ error: "acid and date are required" });
@@ -38,7 +37,6 @@ const BalanceController = {
 
   getOverDue: async (req, res) => {
     const { acid, date } = req.query; // get from query parameters
-    console.log("date: ", date)
 
     if (!acid || !date) {
       return res.status(400).json({ error: "acid and date are required" });

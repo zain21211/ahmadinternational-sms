@@ -46,6 +46,25 @@ const formatCurrency = (value) => {
   });
 };
 
+// const customTextField = {
+//                 width: { xs: "100%", md: "150px" }, // Control width
+//                 "& .MuiOutlinedInput-root": {
+//                   backgroundColor: overDue !== "0.00" ? "red" : "transparent", // Background color based on value
+//                   "& fieldset": {
+//                     borderColor: overDue !== "0.00" ? "red" : undefined, // Border color
+//                   },
+//                   "&:hover fieldset": {
+//                     borderColor: overDue !== "0.00" ? "red" : undefined,
+//                   },
+//                   "&.Mui-focused fieldset": {
+//                     borderColor: overDue !== "0.00" ? "red" : undefined,
+//                   },
+//                 },
+//                 "& .Mui-disabled": {
+//                   fontWeight: "bold",
+//                 },
+//               }
+
 // --- Utility Functions ---
 // Removed local debounce as lodash.debounce is imported now
 function escapeRegExp(string) {
@@ -71,8 +90,12 @@ function makeWildcardRegex(filter) {
   }
 }
 
+<<<<<<< HEAD
 
 
+=======
+const url = "http://100.72.169.90:3001/api";
+>>>>>>> 15c12c6b3b263743b7bd0ab609a594498a1eb66a
 
 const OrderForm = () => {
   console.log("OrderForm rendering or re-rendering");
@@ -96,8 +119,12 @@ const OrderForm = () => {
   const [balance, setBalance] = useState(null);
   const quantityInputRef = useRef(null);
   const navigate = useNavigate();
+  const [doc, setDoc] = useState(null);
   const [productInputValue, setProductInputValue] = useState("");
+  const [viewDate, setViewDate] = useState(null);
   const user = JSON.parse(localStorage.getItem("user"));
+  const [cost, setCost] = useState(0)
+  const [profit, setProfit] = useState(0)
 
   // STATES MANAGED IN OrderForm (and localStorage)
   // Use a specific key for the selected customer OBJECT
@@ -147,6 +174,7 @@ const OrderForm = () => {
   const [price, setPrice] = useState(0); // Selected product's sale rate
   const [calculatedAmount, setCalculatedAmount] = useState(0); // Numeric amount for the current item
   const [vest, setVest] = useState(0); // Numeric vest value for the current item
+
 
   const [schPc, setSchPc] = useState(0); // Scheme pieces for current item
   const [scheme, setScheme] = useState(""); // Scheme text for current item
@@ -200,28 +228,111 @@ const OrderForm = () => {
     []
   );
 
-  const BigTextField = styled(TextField)({
-    "& .MuiInputBase-root": {
-      fontSize: "1.25rem",
-      width: "auto",
-      minWidth: "150px",
-    },
-    "& label.Mui-focused": {
-      fontSize: "1.1rem",
-    },
-    "& label": {
-      fontSize: "1rem",
-    },
-    "& .MuiInputLabel-root": {
-      transformOrigin: "top left",
-    },
-  });
+const BigTextField = styled(TextField)({
+  "& .MuiInputBase-root": {
+    fontSize: "1.4rem",
+    width: "auto",
+    minWidth: "150px",
+
+  },
+  "& .MuiInputBase-input": {
+    fontWeight: "bold",         // Input text
+    textAlign: "center",   
+      letterSpacing: "1.5px", // 👈 adjust this value as needed     // Input text center
+  },
+  "& label": {
+    fontSize: "1rem",
+    fontWeight: "bold",         // Label normal
+  },
+  "& label.Mui-focused": {
+    fontSize: "1.1rem",
+    fontWeight: "bold",         // Label when focused
+  },
+  "& .MuiInputLabel-root": {
+    transformOrigin: "top left",
+  },
+});
+
 
   // const handlePrint = async(){
   //   const responce
   // }
   // --- Effects ---
-const handlePrint =()=>{}
+  const handlePrint = () => {
+    window.print;
+  };
+
+  useEffect(() => {
+    const getDoc = async () => {
+      try {
+        const response = await axios.get(`${url}/create-order/doc`, {
+          params: {
+            acid: selectedCustomer?.acid || "",
+          },
+        });
+        const { nextDoc, date, total } = response.data;
+        setDoc(nextDoc);
+        setTotalAmount(Math.round(total))
+        setViewDate(date);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    if(selectedCustomer){
+      getDoc();
+    }
+  }, [selectedCustomer]);  
+  
+  // for fetch the Cost
+  useEffect(() => {
+    const getCost = async () => {
+      try {
+        const response = await axios.get(`${url}/create-order/cost`, {
+          params: {
+            ItemCode: selectedProduct?.code || "",
+          },
+        });
+        const cost = response.data;
+        setCost(cost)
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+
+    if(selectedProduct){
+      getCost();
+    }
+  }, [selectedProduct, API_BASE_URL]);
+
+  useEffect(() => {
+    console.log("calculating profit")
+    function parseAmountString(amountStr) {
+      console.log("the tyrpe ", typeof amountStr)
+  if (typeof amountStr !== "string") return 0;
+
+  // Remove all commas and parse as number
+  const cleaned = amountStr.replace(/,/g, "");
+  const number = parseFloat(cleaned);
+
+  console.log("the number ", amountStr)
+  console.log("new ", number)
+  return isNaN(number) ? 0 : number;
+}
+
+    // Only calculate if all required values are present and valid
+    if (true) {
+      console.log("calculatedAmount:", calculatedAmount, "quantity:", quantity, "cost:", cost);
+      console.log("calculatedAmount / quantity:",((calculatedAmount ||0) / (quantity || 0)) , "amount - cost: ",(((calculatedAmount ||0) / (quantity || 0)) - cost.cost ) , quantity, "cost:", cost);
+      const net_profit = (((calculatedAmount ||0) / (quantity || 0)) - cost.cost ) * (quantity || 0);
+      setProfit(Math.round(net_profit));
+      console.log(net_profit)
+    } else {
+      setProfit(0);
+    }
+  }, [calculatedAmount, quantity, cost, API_BASE_URL]);
+
   // Effect to fetch customer balance and overdue based on selected customer and date
   useEffect(() => {
     const fetchCustomerFinancials = async () => {
@@ -244,7 +355,6 @@ const handlePrint =()=>{}
           },
           headers: { Authorization: `Bearer ${token}` }, // Add token
         });
-        console.log("Customer balance response:", responseBal.data);
         const { balance } = responseBal.data;
         setBalance(formatCurrency(Math.round(balance)));
 
@@ -286,21 +396,15 @@ const handlePrint =()=>{}
   // Effect to fetch discount based on selected customer and product company
   useEffect(() => {
     const fetchDiscount = async () => {
-      console.log(
-        "Fetching discount for product:",
-        selectedProduct?.ID,
-        "customer:",
-        selectedCustomer?.acid
-      );
+
+
       if (
-        !selectedProduct ||
+        !selectedProduct &&
         !selectedCustomer ||
         !selectedCustomer.acid ||
-        !selectedProduct.Company
+        !selectedProduct?.Company
       ) {
-        console.log(
-          "Skipping discount fetch: missing product or customer info."
-        );
+
         setDiscount1(0);
         setDiscount2(0);
         return;
@@ -317,7 +421,6 @@ const handlePrint =()=>{}
         const { disc1P, discount } = response.data;
         setDiscount1(disc1P || 0);
         setDiscount2(discount || 0);
-        console.log("Discount response:", response.data);
       } catch (error) {
         console.error(
           "Error fetching discount:",
@@ -327,8 +430,7 @@ const handlePrint =()=>{}
         setDiscount1(0);
         setDiscount2(0);
       }
-    };
-
+  }
     // Fetch whenever selectedProduct, selectedCustomer, or API_BASE_URL changes
     fetchDiscount();
   }, [selectedProduct, selectedCustomer, API_BASE_URL, token]); // Added dependencies
@@ -337,7 +439,6 @@ const handlePrint =()=>{}
   useEffect(() => {
     const getSchSlabs = async () => {
       if (!selectedProduct || !selectedProduct.code) {
-        console.log("Skipping scheme slab fetch: no product selected.");
         setScheme("");
         return;
       }
@@ -349,7 +450,6 @@ const handlePrint =()=>{}
           },
           headers: { Authorization: `Bearer ${token}` }, // Add token
         });
-        console.log("Scheme slabs response:", response.data);
 
         const sch = response.data; // Assuming response.data is the scheme object
 
@@ -388,7 +488,6 @@ const handlePrint =()=>{}
         orderQuantity <= 0 ||
         !Sch
       ) {
-        console.log("Skipping scheme piece calculation.");
         setSchPc(0); // Reset scheme pieces if conditions not met
         setQuantity(orderQuantity); // Total quantity is just order quantity
         return;
@@ -428,7 +527,7 @@ const handlePrint =()=>{}
 
     // Recalculate when orderQuantity, selectedProduct, or Sch flag changes
     getSch();
-  }, [orderQuantity, selectedProduct, Sch, API_BASE_URL, token]); // Added dependencies
+  }, [orderQuantity, selectedProduct, Sch]); // Added dependencies
 
   // Effect to calculate price, vest, and amount for the current item
   useEffect(() => {
@@ -451,9 +550,6 @@ const handlePrint =()=>{}
 
     setCalculatedAmount(finalAmount); // Store numeric calculated amount
 
-    console.log(
-      `Calculation: Qty=${numericOrderQuantity}, Price=${numericPrice}, D1=${numericDiscount1}, D2=${numericDiscount2}, Vest=${calculatedVest}, Amount=${finalAmount}`
-    );
   }, [orderQuantity, selectedProduct, discount1, discount2]); // Recalculate when these change
 
   // Effect to fetch initial product and company data
@@ -603,6 +699,9 @@ const handlePrint =()=>{}
   ]);
 
   // --- Event Handlers ---
+  useEffect(() => {
+    console.log("Profit changed:", profit);
+  }, [profit]);
 
   // Handler for when a customer is selected from LedgerSearchForm
   const handleSelectCustomer = useCallback((customer) => {
@@ -684,6 +783,8 @@ const handlePrint =()=>{}
       return;
     }
 
+    console.log("this si the profit ", profit)
+
     // Add the product to orderItems
     const newItem = {
       productID: selectedProduct.ID,
@@ -702,11 +803,12 @@ const handlePrint =()=>{}
       amount: Number(calculatedAmount) || 0, // Final calculated numeric amount for the item
       isClaim: isClaim,
       Sch: Sch,
+       profit: profit,
       remakes: productRemakes.trim(), // Add remakes
     };
 
+    console.log("this is order item ", orderItems)
     setOrderItems((prev) => [...prev, newItem]);
-    console.log("Added item to orderItems: ", newItem);
 
     // Reset item-specific states after adding
     setSelectedProduct(null);
@@ -743,6 +845,7 @@ const handlePrint =()=>{}
     calculatedAmount,
     isClaim,
     Sch,
+    profit,
     productRemakes,
     selectedProduct?.StockQty,
   ]); // Added dependencies
@@ -753,12 +856,7 @@ const handlePrint =()=>{}
   }, []); // No dependencies needed
 
   const handlePostOrder = async () => {
-    console.log(
-      "handlePostOrder clicked. Selected Customer:",
-      selectedCustomer,
-      "Order Items:",
-      orderItems.length
-    );
+ 
     setError(null); // Clear previous errors
     setSuccess(null); // Clear previous success messages
 
@@ -777,8 +875,13 @@ const handlePrint =()=>{}
 
     setLoading(true); // Set general loading for this operation
 
+    orderItems.map(item =>{
+
+      console.log("this the item profit ", item.profit)
+    })
     try {
       const payload = {
+        doc,
         products: orderItems.map((item) => ({
           date: selectedDate, // Use the date in YYYY-MM-DD format
           acid: String(selectedCustomer.acid), // Ensure acid is string
@@ -798,6 +901,7 @@ const handlePrint =()=>{}
           sch: Boolean(item.Sch), // Ensure boolean
           isClaim: Boolean(item.isClaim), // Ensure boolean
           prid: String(item.productID) || "0", // Ensure product ID is string, default to '0' if null/undefined
+          profit: item.profit,
           remakes: item.remakes || "", // Include remakes
         })),
         // Add other top-level order details if API expects them (e.g., CustomerID, Date, Location, User)
@@ -1067,8 +1171,14 @@ const handlePrint =()=>{}
               InputLabelProps={{
                 shrink: true,
                 sx: {
-                  color: overDue !== "0.00" ? "white" : "black !important",
-                }, // Label color based on value
+                  color: "black !important", // label color
+                  fontWeight: "bold !important", // bold label
+                  backgroundColor: "white !important",
+                  paddingRight: 2,
+                  paddingLeft: "7px",
+                  borderRadius: "4px",
+                  fontSize: "1rem", // optional: change size
+                },
               }}
               InputProps={{
                 sx: {
@@ -1099,6 +1209,52 @@ const handlePrint =()=>{}
               }}
             />
           )}
+
+          {/* for doc */}
+          {doc !== null && ( // Only render if overdue is not null
+          <BigTextField
+            label=" ESTIMATE #"
+            value={doc}
+            InputProps={{
+                sx: {
+                    color:
+                      doc !== "0.00" ? "white" : "black !important", // Text color based on value
+                },
+              }}
+            InputLabelProps={{ shrink: true,
+              sx: {
+                  color: "black !important", // label color
+                  fontWeight: "bold !important", // bold label
+                  backgroundColor: "white !important",
+                  paddingRight: 2,
+                  paddingLeft: "7px",
+                  borderRadius: "4px",
+                  fontSize: "1rem", // optional: change size
+                },
+             }}
+            variant="outlined"
+            onChange={e => setDoc(e.target.value)}
+            onFocus={(e) => e.target.select()}
+            sx={{
+                width: { xs: "100%", md: "150px" }, // Control width
+                "& .MuiOutlinedInput-root": {
+                  backgroundColor: overDue !== "0.00" ? "green" : "transparent", // Background color based on value
+                  "& fieldset": {
+                    borderColor: overDue !== "0.00" ? "green" : undefined, // Border color
+                  },
+                  "&:hover fieldset": {
+                    borderColor: doc !== "0.00" ? "green" : undefined,
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: overDue !== "0.00" ? "green" : undefined,
+                  },
+                },
+                "& .Mui-disabled": {
+                  fontWeight: "bold",
+                },
+              }}
+          />
+)}
           {/* Add Past Payment field here if needed */}
         </Box>
       )}
@@ -1505,7 +1661,7 @@ const handlePrint =()=>{}
             onFocus={(e) => e.target.select()}
             onChange={(e) => {
               const value = Number(e.target.value);
-              if ((value + discount2) <= 12) setDiscount1(value);
+              if (value + discount2 <= 12) setDiscount1(value);
             }} // Ensure non-negative
             sx={{
               gridColumn: { xs: "span 1", sm: "span 1", md: "auto" }, // Adjust grid span
@@ -1526,7 +1682,7 @@ const handlePrint =()=>{}
             onFocus={(e) => e.target.select()}
             onChange={(e) => {
               const value = Number(e.target.value);
-              if ((value + discount1) <= 12) setDiscount2(value);
+              if (value + discount1 <= 12) setDiscount2(value);
             }} // Ensure non-negative
             disabled={!(selectedCustomer?.acid === 1438)}
             sx={{
@@ -1624,25 +1780,29 @@ const handlePrint =()=>{}
         {orderItems.length > 0 && (
           <Box sx={{ marginY: 2 }}>
             <Box
-              sx={{display: "flex", justifyContent: "space-between", alignItems: "center" }}
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
             >
-            <Typography variant="h6" gutterBottom>
-              {" "}
-              {/* Use h6 and gutterBottom for spacing */}
-              Order Preview
-            </Typography>
-            <Button
-              variant="contained"
-              color="secondary"
-              size="small"
-              onClick={() => {
-                setOrderItems([]); // Clear order items   
+              <Typography variant="h6" gutterBottom>
+                {" "}
+                {/* Use h6 and gutterBottom for spacing */}
+                Order Preview
+              </Typography>
+              <Button
+                variant="contained"
+                color="secondary"
+                size="small"
+                onClick={() => {
+                  setOrderItems([]); // Clear order items
                 }}
-              disabled={loading}
-              sx={{ mb: 1 }}
-            >
-              Clear Order
-            </Button>
+                disabled={loading}
+                sx={{ mb: 1 }}
+              >
+                Clear Order
+              </Button>
             </Box>
             <List
               dense
@@ -1736,7 +1896,7 @@ const handlePrint =()=>{}
               "Post Order"
             )}
           </Button>
-        </Box> 
+        </Box>
         {/* print Order Button */}
         <Box sx={{ mt: 3, textAlign: "center" }}>
           <Button
@@ -1752,16 +1912,29 @@ const handlePrint =()=>{}
             }
             sx={{ minWidth: "200px" }}
           >
-            {orderItems ? ( // Show loader when 'loading' state is true (specifically for post order)
-              <CircularProgress size={24} color="inherit" />
-            ) : (
-              "Print"
-            )}
+            {orderItems && // Show loader when 'loading' state is true (specifically for post order)
+              "Print"}
           </Button>
         </Box>
       </Paper>
     </Container>
   );
 };
+
+// --- Move this code to a new file: OrderPage.jsx ---
+export function OrderPage({ customerAcid }) {
+  const [nextDoc, setNextDoc] = useState("");
+
+  useEffect(() => {
+    if (customerAcid) {
+      axios
+        .get(`/api/orders/nextdoc?acid=${customerAcid}`)
+        .then((res) => setNextDoc(res.data.nextDoc))
+        .catch(() => setNextDoc(""));
+    } else {
+      setNextDoc("");
+    }
+  }, [customerAcid]);
+}
 
 export default OrderForm;

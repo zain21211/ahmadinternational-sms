@@ -27,9 +27,7 @@ const hours = pad(pakistanTime.getHours());     // 24-hour format
 const minutes = pad(pakistanTime.getMinutes());
 const seconds = pad(pakistanTime.getSeconds());
 
-const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-console.log(formattedDateTime);
-
+const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}`;
 
 console.log(formattedDateTime)
     

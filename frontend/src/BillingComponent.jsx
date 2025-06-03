@@ -349,6 +349,25 @@ const BillingComponent = ({ name = "INVOICE" }) => {
               Submit
             </Button> */}
           </Box>
+          {/* print Order Button */}
+        <Box sx={{ mt: 3, textAlign: "center" }}>
+          <Button
+            variant="contained"
+            color="primary"
+            size="large"
+             onClick={window.print}
+            // disabled={
+            //   loading || // Disable during loading/posting
+            //   initialDataLoading || // Disable during initial data fetch
+            //   orderItems.length === 0 || // Cannot post empty order
+            //   !selectedCustomer // Must have a selected customer
+            // }
+            sx={{ minWidth: "200px" }}
+          >
+                "Print"
+            
+          </Button>
+        </Box>
         </Paper>
       </Container>
     </ThemeProvider>

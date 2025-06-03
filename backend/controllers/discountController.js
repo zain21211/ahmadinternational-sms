@@ -3,7 +3,6 @@ const dbConnection = require("../database/connection");
 
 const getDiscount = async (req, res) => {
   const { acid, company } = req.query;
-console.log("params = ", req.query)
   if (!acid || !company) {
     return res.status(400).json({ error: 'acid and company are required parameters' });
   }

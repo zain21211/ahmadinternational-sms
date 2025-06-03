@@ -52,31 +52,27 @@ function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function makeWildcardRegex(filter, _for = "") {
+function makeWildcardRegex(filter) {
   if (!filter || filter.trim() === "") return null;
 
   const lowerFilter = filter.toLowerCase().trim();
-  let pattern = "";
 
-  if (lowerFilter.includes("%")) {
-    const parts = lowerFilter.split("%");
-    pattern = parts.map((part) => escapeRegExp(part)).join(".*");
+  // Support both spaces and % as wildcards
+  const terms = lowerFilter.split(/[%\s]+/).map(escapeRegExp);
 
-    if (!lowerFilter.startsWith("%")) pattern = "^" + pattern;
-    if (!lowerFilter.endsWith("%")) pattern += "$";
-  } else if (_for.toLowerCase() === "model") {
-    pattern = `.*${escapeRegExp(lowerFilter)}.*`;
-  } else {
-    pattern = `^${escapeRegExp(lowerFilter)}`;
-  }
+  // Build: start with first term, then match rest anywhere in order
+  const pattern = `^${terms[0]}.*` + terms.slice(1).join(".*");
 
   try {
-    return new RegExp(pattern);
+    return new RegExp(pattern, 'i');
   } catch (e) {
     console.error("Invalid regex:", pattern, e);
     return null;
   }
 }
+
+
+
 
 const OrderForm = () => {
   console.log("OrderForm rendering or re-rendering");
@@ -185,7 +181,7 @@ const OrderForm = () => {
     return d.toISOString().split("T")[0];
   }, [today]);
 
-  const API_BASE_URL = "http://100.72.169.90:3001/api";
+  const API_BASE_URL = "http://100.122.80.93:3001/api";
 
   // --- Debounced Update Functions ---
   const debouncedSetCompanyFilter = useCallback(
@@ -580,13 +576,17 @@ const handlePrint =()=>{}
       }
     }
 
+      console.log('before triming = ', productInputValue)
+
     // Filter by product name typed in autocomplete
     if (productInputValue.trim()) {
-      const nameRegex = makeWildcardRegex(productInputValue);
+      const nameRegex = makeWildcardRegex(productInputValue, "product");
+      console.log('afetr triming = ', nameRegex)
       if (nameRegex) {
         filtered = filtered.filter(
           (p) => p.Name && nameRegex.test(p.Name.toLowerCase())
         );
+        console.log("the options", filtered)
       } else {
         return []; // Invalid pattern
       }
@@ -1229,6 +1229,8 @@ const handlePrint =()=>{}
             options={
               productInputValue.length < 2 ? [] : filteredAutocompleteOptions
             }
+            filterOptions={(options) => options}
+
             getOptionLabel={(option) => option?.Name || ""}
             isOptionEqualToValue={(option, value) => option?.ID === value?.ID}
             inputValue={productInputValue}

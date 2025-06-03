@@ -27,7 +27,7 @@ import {
   Container,
 } from "@mui/material";
 
-const url = "http://100.72.169.90:3001/api"; // Update with your actual API URL
+const url = "http://100.122.80.93:3001/api"; // Update with your actual API URL
 
 const LabelWithImage = ({ src, label }) => (
   <Box display="flex" alignItems="center" gap={1}>

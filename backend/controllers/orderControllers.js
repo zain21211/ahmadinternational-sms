@@ -4,17 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const orderControllers = {
   postOrder: async (req, res) => {
-<<<<<<< HEAD
-    const { products } = req.body;
-
-     const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
-
-  const decoded = jwt.verify(token, process.env.JWT_SECRET); // This decodes and verifies
-
-    // Use decoded info as needed
-    const {username} = decoded;
-=======
     const { products, totalAmount } = req.body;
 
     const authHeader = req.headers.authorization;
@@ -32,32 +21,22 @@ const orderControllers = {
     }
     
     const {username} = decoded; // User performing the action
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
 
     let nextDoc;
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: "No products provided" });
     }
 
-<<<<<<< HEAD
-     // Assume all products have the same acid & date for this order:
-    const acid = products[0].acid;
-=======
     // Assume all products have the same acid & date for this order:
     const customerAcid = products[0].acid; // Customer's account ID
     const orderDate = products[0].date;   // Date of the order
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
 
     try {
       const pool = await dbConnection(); // ✅ Correct usage
       
       const docResult = await pool
         .request()
-<<<<<<< HEAD
-        .input("acid", sql.VarChar, acid)
-=======
         .input("acid", sql.VarChar, customerAcid)
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
         .query(`
           SELECT ISNULL(
             (SELECT MAX(doc) FROM psproduct WHERE acid=@acid AND type='sale' AND printStatus IS NULL),
@@ -67,15 +46,30 @@ const orderControllers = {
 
        nextDoc = docResult.recordset[0].nextDoc || 1;
 
+       const maxDocResult = await pool.request().query(`
+SELECT DOC FROM DocNumber WHERE TYPE='SALE'
+`);
+const maxDoc =  maxDocResult.recordset[0].DOC
+console.log("the next doc = ", nextDoc)
+console.log("the max doc = ", maxDoc)
+
+if (nextDoc === maxDoc) {
+  const newDocValue = nextDoc + 1;
+
+  await pool.request()
+    .input("newDoc", sql.Int, newDocValue)
+    .query(`
+      UPDATE docnumber
+      SET doc = @newDoc
+      WHERE type = 'sale'
+    `);
+console.log("the new doc = ", newDocValue)
+}
+
       for (const item of products) {
         const {
-<<<<<<< HEAD
-          date,
-          acid,
-=======
           date, // Note: item.date is used here, consider using orderDate for consistency if all items must share date
           acid, // Note: item.acid is used here, should be customerAcid for consistency
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
           qty,
           aQty,
           bQty,
@@ -91,30 +85,18 @@ const orderControllers = {
           prid,
         } = item;
 
-<<<<<<< HEAD
-        console.log("products: ", products)
-=======
         // console.log("products: ", products) // Removed for cleaner output, enable if debugging
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
 
         const discount1 = (discP1 / 100) * rate * qty;
         const discount2 = (discP2 / 100) * rate * qty;
 
         await pool.request()
-<<<<<<< HEAD
-          .input("Date", sql.VarChar, date)
-=======
           .input("Date", sql.VarChar, date) // Using item.date
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
           .input("Type", sql.VarChar, "Sale")
           .input("Doc", sql.Int, nextDoc)
           .input("Type2", sql.VarChar, "OUT")
           .input("Prid", sql.VarChar, prid)
-<<<<<<< HEAD
-          .input("Acid", sql.VarChar, acid)
-=======
           .input("Acid", sql.VarChar, acid) // Using item.acid, typically this should be customerAcid
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
           .input("Packet", sql.Int, 0)
           .input("Qty2", sql.Int, qty)
           .input("AQTY", sql.Int, aQty)
@@ -149,27 +131,6 @@ const orderControllers = {
           `);
       }
 
-<<<<<<< HEAD
-      const invoiceDataResult = await pool
-      .request()
-      .input("doc", sql.Int, nextDoc)
-      .input("acid", sql.VarChar, acid)
-      .query(`
-        SELECT * FROM PsProduct
-        WHERE Doc = @doc AND Acid = @acid
-      `);
-
-    const invoiceData = invoiceDataResult.recordset;
-
-    res.status(200).json({
-      message: "Order created successfully!",
-      invoiceNumber: nextDoc,
-      invoiceData: invoiceData,
-    });
-    } catch (err) {
-      console.error("Error inserting order:", err);
-      return res.status(500).json({ error: "Internal server error", msg: err});
-=======
       // 3. Delete any existing PSDetail entry for this doc & type
       await pool.request()
         .input("doc", sql.Int, nextDoc)
@@ -239,7 +200,7 @@ const orderControllers = {
       // 6. Insert Debit entry into ledgers (Customer Account is Debited)
       // The amount debited should be the final net amount payable by the customer.
       // For simplicity, using totalOrderAmount. Adjust if there are further discounts/charges.
-      const debitNarration = `Sales INV # ${nextDoc}`;
+      const debitNarration = `ESTIMATE`;
       await pool.request()
         .input("acid", sql.VarChar, customerAcid)       // Customer's account ID
         .input("date", sql.VarChar, orderDate)          // Date of the sale
@@ -255,7 +216,7 @@ const orderControllers = {
       // 7. Insert Credit entry into ledgers (Sales Revenue Account is Credited)
       // IMPORTANT: Replace 'YOUR_SALES_REVENUE_ACCOUNT_ID' with your actual Sales Revenue Account ID from your Chart of Accounts.
       const salesRevenueAcid = '4'; 
-      const creditNarration = `PAID CASH`;
+      const creditNarration = `ESTIMATE`;
       await pool.request()
         .input("acid", sql.VarChar, salesRevenueAcid)   // Sales revenue account ID
         .input("date", sql.VarChar, orderDate)          // Date of the sale
@@ -298,13 +259,8 @@ const orderControllers = {
         errorMessage = err.message;
       }
       return res.status(500).json({ error: "Failed to create order.", msg: errorMessage, details: err });
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
     }
   },
 };
 
-<<<<<<< HEAD
 module.exports = orderControllers;
-=======
-module.exports = orderControllers;
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e

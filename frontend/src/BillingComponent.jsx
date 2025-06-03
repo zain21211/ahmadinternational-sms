@@ -57,7 +57,7 @@ const productDetail = [
   { label: "Amount", size: 2 },
 ];
 
-const invoiceAPI = "http://100.72.169.90:3001/api/invoices";
+const invoiceAPI = "http://100.122.80.93:3001/api/invoices";
 
 const formatCurrency = (value) => {
   const num = Number(value);

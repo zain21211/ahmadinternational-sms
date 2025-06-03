@@ -2,19 +2,11 @@ const sql = require("mssql");
 const dbConnection = require("../database/connection");
 
 const paymentModes = {
-<<<<<<< HEAD
-  cash: { type: 'CRV', debitAcid: 1, narrationPrefix: 'Cash Recd. by' },
-  jazzcash: { type: 'BRV', debitAcid: 1983, narrationPrefix: 'JazzCash Recd. by' },
-  easypaisa: { type: 'BRV', debitAcid: 1982, narrationPrefix: 'EasyPaisa Recd. by' },
-  mbl: { type: 'BRV', debitAcid: 326, narrationPrefix: 'OnLine Recd. by' },
-  crownone: { type: 'BRV', debitAcid: 1946, narrationPrefix: 'Lifan Wallet Amount Recd. by' },
-=======
   cash: { type: 'CRV', debitAcid: 1, narrationPrefix: 'Pending: Cash Recd. by' },
   jazzcash: { type: 'BRV', debitAcid: 1983, narrationPrefix: 'Pending: JazzCash Recd. by' },
   easypaisa: { type: 'BRV', debitAcid: 1982, narrationPrefix: 'Pending: EasyPaisa Recd. by' },
   mbl: { type: 'BRV', debitAcid: 326, narrationPrefix: 'Pending: OnLine Recd. by' },
   crownone: { type: 'BRV', debitAcid: 1946, narrationPrefix: 'Pending: Lifan Wallet Amount Recd. by' },
->>>>>>> cc30618de888b9ef79efc2bb9714bcf500be1d1e
 };
 
 const CashEntryController = {

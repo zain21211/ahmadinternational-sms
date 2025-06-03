@@ -195,7 +195,8 @@ const LedgerSearchForm = React.memo(
         setCustomerError(null);
         try {
           const response = await axios.get(
-            "http://100.72.169.90:3001/api/customers",
+            "http://100.122.80.93:3001/api/customers",
+
             {
               headers: { Authorization: `Bearer ${token}` },
               params:{

@@ -225,7 +225,7 @@ const Ledger = () => {
     setSummary({ totalDebit: 0, totalCredit: 0, netBalance: 0 }); // Reset summary immediately
 
     try {
-      const url = `http://100.72.169.90:3001/ledger`;
+      const url = `http://100.122.80.93:3001/ledger`;
       const response = await axios.get(url, {
         params: { acid, startDate, endDate },
         timeout: 15000, // Add a 15-second timeout for the request

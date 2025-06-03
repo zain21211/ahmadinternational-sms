@@ -87,7 +87,7 @@ const handleChange = (event) => {
     try {
       // --- Actual API Call ---
       const response = await axios.post(
-        "http://100.72.169.90:3001/api/login", // Replace with your actual API endpoint
+        "http://100.122.80.93:3001/api/login", // Replace with your actual API endpoint
         {
           password: password,
           checked: checked

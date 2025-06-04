@@ -90,12 +90,7 @@ function makeWildcardRegex(filter) {
   }
 }
 
-<<<<<<< HEAD
-
-
-=======
-const url = "http://100.72.169.90:3001/api";
->>>>>>> 15c12c6b3b263743b7bd0ab609a594498a1eb66a
+const url = "http://100.122.80.93:3001/api";
 
 const OrderForm = () => {
   console.log("OrderForm rendering or re-rendering");

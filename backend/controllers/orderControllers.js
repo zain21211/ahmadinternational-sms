@@ -50,11 +50,19 @@ const orderControllers = {
         nextDoc = doc;
       }
 
-      const maxDoc = await pool.request().query(`
+      const maxDocR = await pool.request().query(`
           SELECT DOC FROM DocNumber WHERE TYPE='SALE'
         `);
 
+
+        maxDoc = maxDocR.recordset[0].DOC || 1;
+
+
+        console.log( " nextDoc # ", nextDoc)
+        console.log( " maxDoc # ", maxDoc)
+
 if (nextDoc === maxDoc) {
+
   const newDocValue = nextDoc + 1;
 
   await pool.request()
@@ -144,6 +152,7 @@ console.log("the new doc = ", newDocValue)
       // 4. Insert into PSDetail
       // const { date } = products[0]; // Use orderDate defined at the top
       let totalOrderAmount = totalAmount;
+      
 
       await pool
         .request()
@@ -208,7 +217,7 @@ console.log("the new doc = ", newDocValue)
         .input("type", sql.VarChar, 'sale')
         .input("doc", sql.Int, nextDoc)                 // Document number
         .input("narration", sql.VarChar(255), debitNarration)
-        .input("debit", sql.Decimal(18, 2), totalOrderAmount) // Total sale amount
+        .input("debit", sql.Decimal(18, 2), totalAmount) // Total sale amount
         .query(`
           INSERT INTO ledgers (acid, date, type, doc, NARRATION, Debit) 
           VALUES (@acid, @date, @type, @doc, @narration, @debit)
@@ -248,6 +257,7 @@ console.log("the new doc = ", newDocValue)
         message: "Order created successfully and ledger entries posted!",
         invoiceNumber: nextDoc,
         invoiceData: invoiceData,
+        AMOUNT: totalAmount
       });
     } catch (err) {
       console.error("Error inserting order:", err);
@@ -276,10 +286,9 @@ console.log("the new doc = ", newDocValue)
       .request()
       .input("acid", sql.VarChar, acid)
       .query(`
-       SELECT MAX(doc) AS nextDoc
-FROM psproduct
-WHERE acid = @acid AND type = 'sale' AND printStatus IS NULL
-
+        SELECT MAX(doc) AS nextDoc
+        FROM psproduct
+        WHERE acid = @acid AND type = 'sale' AND printStatus IS NULL
       `);
 
     const nextDoc = docResult.recordset[0]?.nextDoc || null;

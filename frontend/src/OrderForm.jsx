@@ -109,6 +109,7 @@ const OrderForm = () => {
   const [token] = useState(localStorage.getItem("authToken"));
   const productInputRef = useRef(null);
   const customerInputRef = useRef(null);
+  const [perAmount, setPerAmount] = useState(0)
   const companyInputRef = useRef(null);
   const [overDue, setOverDue] = useState(null);
   const [balance, setBalance] = useState(null);
@@ -267,7 +268,7 @@ const BigTextField = styled(TextField)({
         });
         const { nextDoc, date, total } = response.data;
         setDoc(nextDoc);
-        setTotalAmount(Math.round(total))
+        setPerAmount(Math.round(total))
         setViewDate(date);
       } catch (error) {
         console.error(error);
@@ -278,6 +279,9 @@ const BigTextField = styled(TextField)({
       getDoc();
     }
   }, [selectedCustomer]);  
+
+
+
   
   // for fetch the Cost
   useEffect(() => {
@@ -288,7 +292,8 @@ const BigTextField = styled(TextField)({
             ItemCode: selectedProduct?.code || "",
           },
         });
-        const cost = response.data;
+        const {cost} = response.data;
+
         setCost(cost)
       } catch (error) {
         console.error(error);
@@ -317,10 +322,10 @@ const BigTextField = styled(TextField)({
 }
 
     // Only calculate if all required values are present and valid
-    if (true) {
+    if (cost) {
       console.log("calculatedAmount:", calculatedAmount, "quantity:", quantity, "cost:", cost);
       console.log("calculatedAmount / quantity:",((calculatedAmount ||0) / (quantity || 0)) , "amount - cost: ",(((calculatedAmount ||0) / (quantity || 0)) - cost.cost ) , quantity, "cost:", cost);
-      const net_profit = (((calculatedAmount ||0) / (quantity || 0)) - cost.cost ) * (quantity || 0);
+      const net_profit = (((calculatedAmount ||0) / (quantity || 0)) - cost ) * (quantity || 0);
       setProfit(Math.round(net_profit));
       console.log(net_profit)
     } else {
@@ -845,6 +850,8 @@ const BigTextField = styled(TextField)({
     selectedProduct?.StockQty,
   ]); // Added dependencies
 
+  const thisAmount = totalAmount
+
   const handleRemoveProduct = useCallback((indexToRemove) => {
     console.log("handleRemoveProduct at index:", indexToRemove);
     setOrderItems((prev) => prev.filter((_, i) => i !== indexToRemove));
@@ -904,7 +911,7 @@ const BigTextField = styled(TextField)({
         customerAcid: String(selectedCustomer.acid),
         userId: user?.UserID, // Assuming user object has UserID// Use coords if location hook was active
         // Add any other required fields like total amount, total quantity etc.
-        totalAmount: Number(totalAmount),
+        totalAmount: Number(totalAmount + perAmount),
         totalQuantity: Number(orderItemsTotalQuantity),
       };
 
@@ -1863,7 +1870,7 @@ const BigTextField = styled(TextField)({
               <Typography variant="h5">
                 {" "}
                 {/* Use variant h5 for total */}
-                <b>Total Amount: </b> {formatCurrency(totalAmount)}{" "}
+                <b>Total Amount: </b> {formatCurrency(totalAmount + perAmount)}{" "}
                 {/* Display formatted total */}
               </Typography>
             </Box>

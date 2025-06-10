@@ -281,7 +281,6 @@ const BigTextField = styled(TextField)({
   }, [selectedCustomer]);  
 
 
-
   
   // for fetch the Cost
   useEffect(() => {
@@ -321,13 +320,12 @@ const BigTextField = styled(TextField)({
   return isNaN(number) ? 0 : number;
 }
 
-    // Only calculate if all required values are present and valid
-    if (cost) {
+    // Only calculate if all required values are present and valid 
+    if (cost && orderQuantity) {
       console.log("calculatedAmount:", calculatedAmount, "quantity:", quantity, "cost:", cost);
-      console.log("calculatedAmount / quantity:",((calculatedAmount ||0) / (quantity || 0)) , "amount - cost: ",(((calculatedAmount ||0) / (quantity || 0)) - cost.cost ) , quantity, "cost:", cost);
       const net_profit = (((calculatedAmount ||0) / (quantity || 0)) - cost ) * (quantity || 0);
       setProfit(Math.round(net_profit));
-      console.log(net_profit)
+      console.log("cost profit = ", net_profit)
     } else {
       setProfit(0);
     }
@@ -370,7 +368,6 @@ const BigTextField = styled(TextField)({
           }
         );
 
-        console.log("Customer overdue response:", responseOver.data);
         const { overDue } = responseOver.data;
         setOverDue(formatCurrency(Math.round(overDue)));
       } catch (err) {
@@ -401,7 +398,7 @@ const BigTextField = styled(TextField)({
       if (
         !selectedProduct &&
         !selectedCustomer ||
-        !selectedCustomer.acid ||
+        !selectedCustomer?.acid ||
         !selectedProduct?.Company
       ) {
 
@@ -501,7 +498,6 @@ const BigTextField = styled(TextField)({
           },
           headers: { Authorization: `Bearer ${token}` }, // Add token
         });
-        console.log("Scheme piece calculation response:", response.data);
 
         const { SchOn, SchPc: calculatedSchPc } = response.data; // Renamed SchPc to avoid conflict
         let pcs = 0;
@@ -576,7 +572,6 @@ const BigTextField = styled(TextField)({
           headers,
         });
 
-        console.log("Products response raw:", prodResponse);
         const allProducts = prodResponse.data || [];
         const cleanedProducts = allProducts
           .map((p) => ({
@@ -705,7 +700,6 @@ const BigTextField = styled(TextField)({
 
   // Handler for when a customer is selected from LedgerSearchForm
   const handleSelectCustomer = useCallback((customer) => {
-    console.log("OrderForm received selected customer:", customer);
     // Store the selected customer object in OrderForm state (and LS)
     setSelectedCustomer(customer);
     // If a customer is selected, attempt to focus the company input or product input
@@ -970,7 +964,6 @@ const BigTextField = styled(TextField)({
   };
 
   useEffect(() => {
-    console.log("the resetted cutomer: ", selectedCustomer);
     if (selectedCustomer !== ("" || undefined || null)) {
       companyInputRef.current?.focus();
     }

@@ -34,7 +34,9 @@ const customerControllers = {
         !isAdmin &&
         username.toLowerCase() !== "zain" &&
         form.toLowerCase() !== "recovery" &&
-        !usertype.toLowerCase().includes("sm")
+        !usertype.toLowerCase().includes("sm") &&
+        !usertype.toLowerCase().includes("classic") 
+        
       ) {
         sql += ` AND SPO LIKE '%' + @name + '%'`;
       }
@@ -45,7 +47,7 @@ const customerControllers = {
       } else if (usertype.toLowerCase() === `sm-sr`) {
         sql += ` AND Route LIKE 'sr%'`;
       } else if (usertype.toLowerCase() === `sm-classic`) {
-        sql += ` AND Route LIKE '%classic%'`;
+        sql += ` AND SPO LIKE '%classic%'`;
       }
 
       sql += ` ORDER BY Subsidary ASC;`;

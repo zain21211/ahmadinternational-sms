@@ -22,7 +22,7 @@ const orderControllers = {
 
     const { username } = decoded;
 
-    let nextDoc;
+    let nextDoc ;
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ error: "No products provided" });
     }
@@ -135,6 +135,19 @@ const orderControllers = {
           DELETE FROM PSDetail WHERE TYPE = @type AND DOC = @doc
         `);
 
+      // 4. Insert into PSDetail
+      // const { date } = products[0]; // Use orderDate defined at the top
+      let totalOrderAmount = totalAmount;
+
+
+      const result = await pool.request()
+      .input("doc", sql.Int, nextDoc)
+      .query(`SELECT ISNULL(SUM(profit), 0) AS GrossProfit FROM PsProduct WHERE type = 'sale' AND doc = @doc`);
+
+    const GrossProfit = result.recordset[0].GrossProfit;
+    console.log("profit: ", GrossProfit)
+
+
       await pool
         .request()
         .input("Doc", sql.Int, nextDoc)
@@ -157,8 +170,8 @@ const orderControllers = {
         .input("CreditDays", sql.Int, 0)
         .input("PriceList", sql.VarChar, "A")
         .input("BuiltyPath", sql.VarChar, "")
-        .input("remarks", sql.VarChar, "")
-        .input("GrossProfit", sql.Decimal(18, 2), 0)
+        .input("remarks", sql.VarChar, "") // Could add order remarks here
+        .input("GrossProfit", sql.Decimal(18, 2), GrossProfit) // This might need calculation
         .input("Status", sql.VarChar, "ESTIMATE")
         .input("CTN", sql.VarChar, "P")
         .input("Shopper", sql.VarChar, "P")
@@ -179,8 +192,12 @@ const orderControllers = {
   )
 
 
+        
 
-        `); // use actual field names here for clarity
+       --- START: ADDED LEDGER QUERIES ---
+
+
+       `); // use actual field names here for clarity
 
       await pool
         .request()

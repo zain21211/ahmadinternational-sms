@@ -55,14 +55,13 @@ const Login = () => {
   // Check for existing token on component mount
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
+    
     if (token && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
         setUserData(parsedUser);
         setIsLoggedIn(true);
-        // Optionally navigate if user is already logged in,
-        // but often keeping them on the current page until they click a link is fine.
-        // navigate("/dashboard"); // Example auto-redirect
+
       } catch (e) {
         console.error("Failed to parse user data from localStorage", e);
         // Clear potentially corrupted data
@@ -389,21 +388,6 @@ const handleChange = (event) => {
             )}
           </Button>
         </Box>
-
-        {/* Sign Up Link */}
-        {/*
-<Typography
-  variant="body2"
-  color="text.secondary"
-  align="center"
-  sx={{ mt: 4 }}
->
-  Don't have an account?{" "}
-  <MuiLink href="#" variant="body2" color="primary" underline="hover">
-    Sign up
-  </MuiLink>
-</Typography>
-*/}
 
       </Paper>
     </Box>

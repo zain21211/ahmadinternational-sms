@@ -47,17 +47,28 @@ const formatDateForInput = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+// USER A
+const userTypes = [
+  "operator", "admin"
+]
+
+const user = JSON.parse(localStorage.getItem("user"));
+const isAllowed = userTypes.includes(user.userType.toLowerCase())
 // Predefined date range options
 const dateRangeOptions = [
-  { label: "3-Months", value: "3-Months" },
-  { label: "This Week", value: "thisWeek" },
-  { label: "Last Week", value: "lastWeek" },
-  { label: "This Month", value: "thisMonth" },
-  { label: "Last Month", value: "lastMonth" },
-  { label: "This Year", value: "thisYear" },
-  { label: "Last Year", value: "lastYear" },
-  { label: "Custom Range", value: "custom" },
+  { label: "3-Months", value: "3-Months", isAllowed: true },
+  { label: "This Week", value: "thisWeek", isAllowed},
+  { label: "Last Week", value: "lastWeek", isAllowed},
+  { label: "This Month", value: "thisMonth", isAllowed},
+  { label: "Last Month", value: "lastMonth", isAllowed },
+  { label: "This Year", value: "thisYear", isAllowed },
+  { label: "Last Year", value: "lastYear", isAllowed },
+  { label: "Custom Range", value: "custom", isAllowed: true },
 ];
+
+const allowedDateRangeOptions = dateRangeOptions.filter(option => option.isAllowed);
+
+
 
 // Helper function to convert wildcard string to regex
 const wildcardToRegex = (pattern) => {
@@ -179,6 +190,7 @@ const LedgerSearchForm = React.memo(
 
     const [dates, setDates] = useState(initialDates);
     const [dateRangeType, setDateRangeType] = useState("3-Months");
+
 
     // --- Effects ---
     // All effects remain exactly as in your provided code, unless a change is explicitly mentioned for the popper bug.
@@ -703,7 +715,7 @@ const LedgerSearchForm = React.memo(
                       </InputAdornment>
                     }
                   >
-                    {dateRangeOptions.map((option) => (
+                    {allowedDateRangeOptions.map((option) => (
                       <MuiMenuItem key={option.value} value={option.value}>
                         {option.label}
                       </MuiMenuItem>

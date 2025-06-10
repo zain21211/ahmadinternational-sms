@@ -94,12 +94,13 @@ const DataTable = ({
         padding: 0,
       }}
     >
-      <TableContainer sx={{ maxHeight: 500 }}>
+      <TableContainer sx={{ maxHeight: "auto" }}>
         <Table
           stickyHeader
           aria-label="sticky table"
           sx={{
             fontFamily: '"Times New Roman", Times, serif',
+            
             minWidth: columns.reduce(
               (sum, col) =>
                 sum + (col.minWidth || (col.id === "narration" ? 200 : 100)),
@@ -147,9 +148,18 @@ const DataTable = ({
             ) : (
               tableData.map((row, index) => {
                 const rowId = rowKey ? row[rowKey] : null;
+                const shouldHighlightRow = Object.values(row).some(
+                  (val) =>
+                    typeof val === "string" &&
+                    (val.toLowerCase() === "estimate" ||
+                      val.toLowerCase().includes("pending"))
+                );
                 return (
                   <TableRow
                     hover
+                    sx={{
+                      backgroundColor: shouldHighlightRow ? "red" : "white",
+                    }}
                     role="checkbox"
                     tabIndex={-1}
                     key={rowId || index}
@@ -165,8 +175,11 @@ const DataTable = ({
                           align={column.align || "center"}
                           style={{
                             border: "1px solid #ddd",
+                                color: shouldHighlightRow ? "white" : "black",
+    fontWeight: shouldHighlightRow ? "bold" : "normal",
+
                             padding: "6px 8px",
-                            textTransform: "none",
+                            textTransform: "uppercase",
                             minWidth:
                               column.minWidth ||
                               (column.id === "narration" ? 200 : 100),

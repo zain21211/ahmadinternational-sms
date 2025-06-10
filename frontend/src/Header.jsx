@@ -201,7 +201,7 @@ const Header = () => {
         <Toolbar
         sx={{
           m:0,
-          minHeight:"48px"
+          // minHeight:"48px"
         }}
         >
           <IconButton

@@ -374,28 +374,7 @@ const Ledger = () => {
 
   return (
     <Container sx={{ py: 2, px: { xs: 0, sm: 1, md: 1 } }}>
-      <Box
-        sx={{
-          mb: 1,
-          textAlign: "center",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center", // Changed alignContent to alignItems for flexbox
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: 600 }}>
-          ACCOUNTS
-        </Typography>
-        <Box sx={{ textAlign: 'right' }}> {/* Align user info right */}
-          <Typography variant="h6" sx={{ fontWeight: 400 }}> {/* Changed variant to h6 */}
-            <b>Username:</b> {displayUsername}
-          </Typography>
-          <Typography variant="h6" sx={{ fontWeight: 400 }}> {/* Changed variant to h6 */}
-            <b>Type:</b> {displayUserType}
-          </Typography>
-        </Box>
-      </Box>
-
+      
       {/* Corrected Grid container and item structure */}
       <Grid container spacing={3} sx={{ m: 0, width: '100%' }}> {/* Use spacing and full width */}
         <Grid item xs={12} md={4}> {/* Added item prop */}

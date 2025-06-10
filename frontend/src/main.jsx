@@ -37,24 +37,10 @@ const AppLayout = () => {
   const theme = useTheme(); // (Still need useTheme if using styled/sx)
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '45vh' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: 'auto' }}>
       <Header/> {/* Your fixed header component */}
-
-      {/* Spacer element pushing content down */}
-      {/* Using styled component */}
-      <ToolbarSpacer />
-      {/* Or using sx directly */}
-      {/* <Box sx={theme.mixins.toolbar} /> */}
-
-
-      {/* Main content area - No paddingTop needed here */}
       <Box
         component="main"
-        sx={{
-          flexGrow: 1,
-          // Any other styling for the content area itself
-          // p: 2, // Add general padding here if needed
-        }}
       >
         <Routes>
           {/* Your routes */}

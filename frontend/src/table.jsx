@@ -91,6 +91,7 @@ const DataTable = ({
       sx={{
         width: "100%",
         overflow: "hidden",
+        borderRadius: "7px",
         padding: 0,
       }}
     >
@@ -100,7 +101,8 @@ const DataTable = ({
           aria-label="sticky table"
           sx={{
             fontFamily: '"Times New Roman", Times, serif',
-            
+            borderCollapse: "collapse",
+            border: "1px solid #ddd",
             minWidth: columns.reduce(
               (sum, col) =>
                 sum + (col.minWidth || (col.id === "narration" ? 200 : 100)),
@@ -123,8 +125,12 @@ const DataTable = ({
                         width: column.width,
                         fontSize: "1rem",
                         fontWeight: "bold",
+                        textTransform: "uppercase",
+                        color: "#fff",
+                        backgroundColor: "rgba(24, 24, 24, 0.85)",
                         border: "1px solid #ddd",
                         padding: "8px 10px",
+                        // borderRadius: "8px",
                         boxSizing: "border-box",
                       }}
                     >

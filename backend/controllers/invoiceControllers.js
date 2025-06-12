@@ -6,7 +6,7 @@ const dbConnection = require('../database/connection'); // Import your database 
 
 const invoiceControllers = {
     getInvoice: async (req, res) => {
-  const inv = "133030";
+  const inv = "131368";
 
 
   const query = `
@@ -45,6 +45,7 @@ const invoiceControllers = {
     request.input('DocNumber', sql.VarChar, inv);
 
     const result = await request.query(query);
+    console.log("result", result.recordset);
     res.status(200).json(result.recordset);
   } catch (err) {
     console.error('Error fetching invoice:', err);
@@ -67,6 +68,7 @@ const isAdmin = type && type.toLowerCase() === "admin";
   const queryCustomer = `
   SELECT 
   P.Doc AS InvoiceNumber,
+  SUM(P.discount) AS Extra,
   AC.Subsidary AS CustomerName,
   AC.CreditLimit,
   AC.Terms,
@@ -78,6 +80,7 @@ const isAdmin = type && type.toLowerCase() === "admin";
   D.SalesMan AS Vehicle,
   D.Vehicle AS SPO,
   D.Description
+
 FROM PSProduct P 
 JOIN PSDetail D ON P.DOC = D.DOC AND P.TYPE = D.TYPE 
 JOIN COA AC ON D.ACID = AC.ID 

@@ -13,7 +13,7 @@ import {
   Box,
   Typography,
   InputAdornment,
-  Divider,
+  // Divider, // Not used
   IconButton,
   FormControl,
   InputLabel,
@@ -47,36 +47,48 @@ const formatDateForInput = (date) => {
   return `${year}-${month}-${day}`;
 };
 
-// USER A
-const userTypes = [
-  "operator", "admin"
-]
+// USER A Logic
+const userTypes = ["operator", "admin"];
+let isAllowedForDateRanges = false;
+try {
+  const userString = localStorage.getItem("user");
+  if (userString) {
+    const user = JSON.parse(userString);
+    if (user && user.userType && typeof user.userType === "string") {
+      isAllowedForDateRanges = userTypes.includes(user.userType.toLowerCase());
+    }
+  }
+} catch (error) {
+  // console.error("LedgerSearchForm: Failed to parse user data:", error);
+}
 
-const user = JSON.parse(localStorage.getItem("user"));
-const isAllowed = userTypes?.includes(user?.userType?.toLowerCase())
-
-// Predefined date range options
 const dateRangeOptions = [
   { label: "3-Months", value: "3-Months", isAllowed: true },
-  { label: "This Week", value: "thisWeek", isAllowed},
-  { label: "Last Week", value: "lastWeek", isAllowed},
-  { label: "This Month", value: "thisMonth", isAllowed},
-  { label: "Last Month", value: "lastMonth", isAllowed },
-  { label: "This Year", value: "thisYear", isAllowed },
-  { label: "Last Year", value: "lastYear", isAllowed },
+  { label: "This Week", value: "thisWeek", isAllowed: isAllowedForDateRanges },
+  { label: "Last Week", value: "lastWeek", isAllowed: isAllowedForDateRanges },
+  {
+    label: "This Month",
+    value: "thisMonth",
+    isAllowed: isAllowedForDateRanges,
+  },
+  {
+    label: "Last Month",
+    value: "lastMonth",
+    isAllowed: isAllowedForDateRanges,
+  },
+  { label: "This Year", value: "thisYear", isAllowed: isAllowedForDateRanges },
+  { label: "Last Year", value: "lastYear", isAllowed: isAllowedForDateRanges },
   { label: "Custom Range", value: "custom", isAllowed: true },
 ];
 
-const allowedDateRangeOptions = dateRangeOptions.filter(option => option.isAllowed);
+const allowedDateRangeOptions = dateRangeOptions.filter(
+  (option) => option.isAllowed
+);
 
-
-
-// Helper function to convert wildcard string to regex
 const wildcardToRegex = (pattern) => {
   return pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*");
 };
 
-// Virtualized Suggestions List Component
 const ITEM_SIZE = 48;
 
 const VirtualizedSuggestionsList = React.forwardRef(
@@ -89,11 +101,7 @@ const VirtualizedSuggestionsList = React.forwardRef(
       ({ index, style, data: itemData }) => {
         const customer = itemData[index];
         const isHighlighted = index === highlightedIndex;
-
-        if (!customer || !customer.name || !customer.acid) {
-          return null;
-        }
-
+        if (!customer?.name || !customer?.acid) return null;
         return (
           <div style={style} key={customer.acid}>
             <MuiMenuItem
@@ -103,27 +111,29 @@ const VirtualizedSuggestionsList = React.forwardRef(
                 width: "100%",
                 height: "100%",
                 boxSizing: "border-box",
-                borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+                borderBottom: "1px solid rgba(0,0,0,0.12)",
                 backgroundColor: isHighlighted
-                  ? "rgba(0, 0, 0, 0.08)"
+                  ? "rgba(0,0,0,0.08)"
                   : "transparent",
                 "&:hover": {
                   backgroundColor: isHighlighted
-                    ? "rgba(0, 0, 0, 0.12)"
-                    : "rgba(0, 0, 0, 0.04)",
+                    ? "rgba(0,0,0,0.12)"
+                    : "rgba(0,0,0,0.04)",
                 },
                 "&.Mui-focusVisible": {
-                   backgroundColor: isHighlighted
-                     ? "rgba(0, 0, 0, 0.12)"
-                     : "rgba(0, 0, 0, 0.04)",
-                 },
-                overflow: 'hidden',
+                  backgroundColor: isHighlighted
+                    ? "rgba(0,0,0,0.12)"
+                    : "rgba(0,0,0,0.04)",
+                },
+                overflow: "hidden",
               }}
               selected={isHighlighted}
             >
               <ListItemText
                 primary={customer.name}
-                secondary={`ID # ${customer.acid}${customer.route ? ` - Route: ${customer.route}` : ''}`}
+                secondary={`ID # ${customer.acid}${
+                  customer.route ? ` - Route: ${customer.route}` : ""
+                }`}
                 primaryTypographyProps={{ noWrap: true }}
                 secondaryTypographyProps={{ noWrap: true }}
               />
@@ -152,31 +162,44 @@ const VirtualizedSuggestionsList = React.forwardRef(
   }
 );
 
-
 const LedgerSearchForm = React.memo(
-  ({ usage, onFetch, onSelect, onReset, route, disabled, ID = null, ledgerLoading = false }) => {
+  ({
+    usage,
+    onFetch,
+    onSelect,
+    onReset,
+    route,
+    disabled,
+    ID = null,
+    ledgerLoading = false,
+    name = "",
+  }) => {
     const [masterCustomerList, setMasterCustomerList] = useState([]);
     const [allCustomerOptions, setAllCustomerOptions] = useState([]);
     const [customerLoading, setCustomerLoading] = useState(false);
     const [customerError, setCustomerError] = useState(null);
     const [token] = useState(localStorage.getItem("authToken"));
     const [selectedCustomer, setSelectedCustomer] = useState(null);
-    const [displayedInputValue, setDisplayedInputValue] = useState('') // This state remains as per your original code
-
-    const localStorageKey =
-  usage === 'orderForm'
-    ? "orderFormCustomerInput"
-    : usage === 'recovery'
-    ? "recoverpaperCustomerInput"
-    : "ledgerCustomerInput";
-    const [customerInput, setCustomerInput] = useLocalStorageState(localStorageKey, "");
-
+    const localStorageKey = useMemo(
+      () =>
+        usage === "orderForm"
+          ? "orderFormCustomerInput"
+          : usage === "recovery"
+          ? "recoverpaperCustomerInput"
+          : "ledgerCustomerInput",
+      [usage]
+    );
+    const [customerInput, setCustomerInput] = useLocalStorageState(
+      localStorageKey,
+      ""
+    );
     const [customerSuggestions, setCustomerSuggestions] = useState([]);
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const customerInputRef = useRef(null);
     const searchButtonRef = useRef(null);
     const [popperOpen, setPopperOpen] = useState(false);
     const listRef = useRef(null);
+    const prevNameProp = useRef(name);
 
     const initialDates = useMemo(() => {
       const today = new Date();
@@ -188,18 +211,33 @@ const LedgerSearchForm = React.memo(
         endDate: formatDateForInput(end),
       };
     }, []);
-
     const [dates, setDates] = useState(initialDates);
     const [dateRangeType, setDateRangeType] = useState("3-Months");
 
-
-    // --- Effects ---
-    // All effects remain exactly as in your provided code, unless a change is explicitly mentioned for the popper bug.
+    useEffect(() => {
+      if (
+        (name && name !== prevNameProp.current) ||
+        (name && !prevNameProp.current && customerInput !== name)
+      ) {
+        setCustomerInput(name);
+        if (selectedCustomer && selectedCustomer.name !== name) {
+          setSelectedCustomer(null);
+          if (onSelect) onSelect(null);
+        }
+      }
+      prevNameProp.current = name;
+    }, [
+      name,
+      customerInput,
+      selectedCustomer,
+      setCustomerInput,
+      setSelectedCustomer,
+      onSelect,
+    ]);
 
     useEffect(() => {
-      const value = selectedCustomer ? selectedCustomer.name : customerInput;
-      setDisplayedInputValue(value);
-    }, [selectedCustomer, customerInput]);
+      if (selectedCustomer) setPopperOpen(false);
+    }, [selectedCustomer]);
 
     useEffect(() => {
       let isMounted = true;
@@ -212,163 +250,191 @@ const LedgerSearchForm = React.memo(
 
             {
               headers: { Authorization: `Bearer ${token}` },
-              params:{
-                form: usage,
-              }
+              params: { form: usage },
             }
           );
-
-          if (Array.isArray(response.data)) {
-            const validOptions = response.data.filter(
-              (cust) => cust && typeof cust === "object" && cust.name && cust.acid
-            );
-            if (isMounted) {
-               setMasterCustomerList(validOptions);
+          if (isMounted) {
+            if (Array.isArray(response.data))
+              setMasterCustomerList(
+                response.data.filter((c) => c?.name && c?.acid)
+              );
+            else {
+              setCustomerError("Invalid customer list format.");
+              setMasterCustomerList([]);
             }
-          } else {
-            console.error("API returned data is not an array:", response.data);
-             if (isMounted) {
-               setCustomerError("Failed to load customer list (invalid format from API).");
-               setMasterCustomerList([]);
-             }
           }
         } catch (error) {
-          console.error("Error fetching customers:", error);
-          const apiErrorMessage = error.response?.data?.message || error.message;
           if (isMounted) {
-             setCustomerError(`Failed to load customer list: ${apiErrorMessage}`);
-             setMasterCustomerList([]);
+            setCustomerError(
+              `Load failed: ${error.response?.data?.message || error.message}`
+            );
+            setMasterCustomerList([]);
           }
         } finally {
-          if (isMounted) {
-             setCustomerLoading(false);
-          }
+          if (isMounted) setCustomerLoading(false);
         }
       };
-
-      if (token) {
-         fetchCustomerList();
-      } else {
-         setCustomerError("Authentication token not found. Please log in.");
-         setMasterCustomerList([]);
+      if (token) fetchCustomerList();
+      else {
+        setCustomerError("Auth token missing.");
+        setMasterCustomerList([]);
       }
-
-      return () => { isMounted = false; };
-    }, [token, usage]); // Added usage as it is used in params - minor essential fix for correctness
-
+      return () => {
+        isMounted = false;
+      };
+    }, [token, usage]);
 
     useEffect(() => {
-      if (usage === 'recoverpaper') {
+      if (usage === "recoverpaper" || usage === "recovery")
         setCustomerInput("");
-      }
-    }, [route, usage, setCustomerInput]); // Added usage, setCustomerInput for correctness
-
+    }, [route, usage, setCustomerInput]);
     useEffect(() => {
-      if (selectedCustomer) {
+      if (selectedCustomer && customerInput !== selectedCustomer.name)
         setCustomerInput(selectedCustomer.name);
-      }
-    }, [selectedCustomer, setCustomerInput]); // Added setCustomerInput for correctness
-
+    }, [selectedCustomer, customerInput, setCustomerInput]);
     useEffect(() => {
-      let currentDisplayOptions;
-      if (route && masterCustomerList.length > 0) {
-        currentDisplayOptions = masterCustomerList.filter(cust => cust.route && cust.route.toLowerCase() === route.toLowerCase());
-      } else {
-        currentDisplayOptions = masterCustomerList;
-      }
-      setAllCustomerOptions(currentDisplayOptions);
+      setAllCustomerOptions(
+        route && masterCustomerList.length > 0
+          ? masterCustomerList.filter(
+              (c) => c.route?.toLowerCase() === route.toLowerCase()
+            )
+          : masterCustomerList
+      );
     }, [route, masterCustomerList]);
-
 
     useEffect(() => {
       if (ID && allCustomerOptions.length > 0) {
-        const customerToSelect = allCustomerOptions.find(cust => cust.acid === Number(ID));
-        if (customerToSelect) {
-          setSelectedCustomer(customerToSelect);
-          setCustomerInput(customerToSelect.name);
-          setCustomerError(null);
-          if (onSelect) {
-            onSelect(customerToSelect);
+        const cust = allCustomerOptions.find((c) => c.acid === Number(ID));
+        if (cust) {
+          if (!selectedCustomer || selectedCustomer.acid !== cust.acid) {
+            setSelectedCustomer(cust);
+            if (onSelect) onSelect(cust);
           }
-        } else {
-          setSelectedCustomer(null);
-          setCustomerError(`Account ID "${ID}" not found${route ? ` for route "${route}"` : ' in the current list'}.`);
-        }
-      } else if (!ID && selectedCustomer) {
-        setSelectedCustomer(null);
-        if (customerError && customerError.toLowerCase().includes("account id")) {
+          if (customerInput !== cust.name) setCustomerInput(cust.name);
           setCustomerError(null);
-        }
-        if (onSelect) {
-          onSelect(null);
+        } else {
+          if (selectedCustomer) setSelectedCustomer(null);
+          setCustomerError(
+            `ID "${ID}" not found${route ? ` for route "${route}"` : ""}.`
+          );
+          if (onSelect) onSelect(null);
         }
       }
-    }, [ID, allCustomerOptions, onSelect, route, setCustomerInput]);
+    }, [
+      ID,
+      allCustomerOptions,
+      onSelect,
+      route,
+      selectedCustomer,
+      customerInput,
+      setCustomerInput,
+      setSelectedCustomer,
+      setCustomerError,
+    ]);
 
+    // MODIFIED: useEffect for debounced suggestions with auto-select and search
+    useEffect(() => {
+      const filterSuggestionsDebounced = debounce(
+        (
+          currentInputValue,
+          currentOptions,
+          currentSelectedCust, // Renamed to avoid conflict with state
+          currentDates // Pass current dates for search
+        ) => {
+          if (!currentInputValue) {
+            // Should be handled by the else block below, but good guard
+            setCustomerSuggestions([]);
+            setHighlightedIndex(-1);
+            return;
+          }
+          try {
+            const regex = new RegExp(wildcardToRegex(currentInputValue), "i");
+            const filtered = currentOptions.filter(
+              (opt) => opt?.name && regex.test(opt.name)
+            );
+
+            if (
+              filtered.length === 1 &&
+              (!currentSelectedCust ||
+                currentSelectedCust.acid !== filtered[0].acid) &&
+              currentInputValue === customerInput // Ensure this debounced call is for the latest input
+            ) {
+              const customerToSelect = filtered[0];
+
+              setSelectedCustomer(customerToSelect);
+              // setCustomerInput(customerToSelect.name); // Handled by selectedCustomer effect
+              setCustomerSuggestions([]);
+              setPopperOpen(false);
+              setHighlightedIndex(-1);
+              setCustomerError(null);
+
+              if (onSelect) {
+                onSelect(customerToSelect);
+              }
+
+              if (usage === "ledger" && onFetch) {
+                onFetch({
+                  acid: customerToSelect.acid,
+                  name: customerToSelect.name || "",
+                  startDate: currentDates.startDate,
+                  endDate: currentDates.endDate,
+                });
+              }
+              return; // Auto-selection and search processed
+            }
+
+            setCustomerSuggestions(filtered);
+            setHighlightedIndex(filtered.length > 0 ? 0 : -1);
+          } catch (e) {
+            console.error("Regex error in suggestions:", e);
+            setCustomerSuggestions([]);
+            setHighlightedIndex(-1);
+          }
+        },
+        300
+      );
+
+      if (customerInput) {
+        filterSuggestionsDebounced(
+          customerInput,
+          allCustomerOptions,
+          selectedCustomer,
+          dates
+        );
+      } else {
+        setCustomerSuggestions([]);
+        setHighlightedIndex(-1);
+        // Popper might be closed by handleCustomerInputChange if input is empty
+      }
+
+      return () => filterSuggestionsDebounced.cancel();
+    }, [
+      customerInput,
+      allCustomerOptions,
+      selectedCustomer,
+      dates, // Core data dependencies
+      usage,
+      onFetch,
+      onSelect, // Props/callbacks for actions
+      setSelectedCustomer,
+      setCustomerError,
+      setCustomerSuggestions, // Setters
+      setPopperOpen,
+      setHighlightedIndex, // Setters
+    ]);
 
     useEffect(() => {
-        const filterSuggestions = debounce((input, options) => {
-            if (!input) {
-                setCustomerSuggestions([]);
-                setHighlightedIndex(-1);
-                return;
-            }
-            try {
-                const regexPattern = wildcardToRegex(input);
-                const regex = new RegExp(regexPattern, "i");
-                const filtered = options.filter(
-                  (option) =>
-                    option &&
-                    typeof option === "object" &&
-                    option.name &&
-                    typeof option.name === "string" &&
-                    regex.test(option.name)
-                );
-
-                setCustomerSuggestions(filtered);
-                setHighlightedIndex(filtered.length > 0 ? 0 : -1);
-
-                // The popper opening is now handled by handleCustomerInputChange
-                // and the popper's open prop condition.
-
-                if (filtered.length === 1  && (!selectedCustomer || selectedCustomer.acid !== filtered[0].acid)) {
-                   setSelectedCustomer(filtered[0]);
-                    if (onSelect) {
-                        onSelect(filtered[0]);
-                    }
-                } else if (selectedCustomer && filtered.every(f => f.acid !== selectedCustomer.acid)) {
-                   setSelectedCustomer(null);
-                    if (onSelect) {
-                       onSelect(null);
-                    }
-                }
-
-            } catch (e) {
-                console.error("Invalid regex pattern from input:", input, e);
-                setCustomerSuggestions([]);
-                setHighlightedIndex(-1);
-            }
-        }, 300);
-
-        filterSuggestions(customerInput, allCustomerOptions);
-
-        return () => {
-            filterSuggestions.cancel();
-        };
-    }, [customerInput, allCustomerOptions, selectedCustomer, onSelect, usage]); // Added usage as it's in condition
-
-
-    useEffect(() => {
-      if (popperOpen && listRef.current && highlightedIndex !== -1 && customerSuggestions.length > 0) {
+      if (
+        popperOpen &&
+        listRef.current &&
+        highlightedIndex !== -1 &&
+        customerSuggestions.length > 0
+      )
         listRef.current.scrollToItem(highlightedIndex, "smart");
-      }
     }, [highlightedIndex, popperOpen, customerSuggestions.length]);
-
-
     useEffect(() => {
       const today = new Date();
       let start, end;
-
       switch (dateRangeType) {
         case "thisWeek":
           start = new Date(today);
@@ -404,12 +470,12 @@ const LedgerSearchForm = React.memo(
           break;
         case "custom":
           if (!dates.startDate && !dates.endDate) {
-              const defaultStart = new Date(today);
-              defaultStart.setMonth(today.getMonth() - 3);
-              setDates({
-                  startDate: formatDateForInput(defaultStart),
-                  endDate: formatDateForInput(today),
-              });
+            const d = new Date(today);
+            d.setMonth(today.getMonth() - 3);
+            setDates({
+              startDate: formatDateForInput(d),
+              endDate: formatDateForInput(today),
+            });
           }
           return;
         default:
@@ -417,124 +483,122 @@ const LedgerSearchForm = React.memo(
           start.setMonth(today.getMonth() - 3);
           end = new Date(today);
       }
-
-      const newStartDate = formatDateForInput(start);
-      const newEndDate = formatDateForInput(end);
-
-      if (dates.startDate !== newStartDate || dates.endDate !== newEndDate) {
-        setDates({
-          startDate: newStartDate,
-          endDate: newEndDate,
-        });
-      }
-    }, [dateRangeType, dates.startDate, dates.endDate]);
-
-
-    // --- Event Handlers ---
+      const newS = formatDateForInput(start);
+      const newE = formatDateForInput(end);
+      if (dates.startDate !== newS || dates.endDate !== newE)
+        setDates({ startDate: newS, endDate: newE });
+    }, [dateRangeType, dates.startDate, dates.endDate, setDates]);
 
     const handleCustomerInputChange = useCallback(
       (event) => {
-        const newValue = event.target.value;
-        setCustomerInput(newValue);
+        const val = event.target.value;
+        setCustomerInput(val);
         setCustomerError(null);
-
-        if (selectedCustomer && selectedCustomer.name !== newValue) {
+        if (selectedCustomer && selectedCustomer.name !== val) {
           setSelectedCustomer(null);
-          if (onSelect) {
-             onSelect(null);
-          }
+          if (onSelect) onSelect(null);
         }
-        setPopperOpen(!!newValue); // This is key for opening the popper on input
+        setPopperOpen(!!val);
       },
-      [selectedCustomer, onSelect, setCustomerInput]
+      [selectedCustomer, onSelect, setCustomerInput, setSelectedCustomer]
     );
 
-    const handleSuggestionClick = useCallback((customer) => {
-      setSelectedCustomer(customer);
-      setCustomerInput(customer.name);
-      setCustomerSuggestions([]);
-      setPopperOpen(false);
-      setHighlightedIndex(-1);
-      setCustomerError(null);
-      if (onSelect) {
-        onSelect(customer);
-      }
-      if (usage === 'ledger') {
+    // MODIFIED: handleSuggestionClick to also trigger search for ledger
+    const handleSuggestionClick = useCallback(
+      (customer) => {
+        setSelectedCustomer(customer);
+        // setCustomerInput(customer.name); // Handled by selectedCustomer effect
+        setCustomerSuggestions([]);
+        setPopperOpen(false);
+        setHighlightedIndex(-1);
+        setCustomerError(null);
+
+        if (onSelect) {
+          onSelect(customer);
+        }
+
+        // Trigger search if usage is ledger
+        if (usage === "ledger" && onFetch) {
+          onFetch({
+            acid: customer.acid,
+            name: customer.name || "",
+            startDate: dates.startDate, // Use current dates from state
+            endDate: dates.endDate,
+          });
+        } else if (usage === "ledger") {
+          // Fallback if onFetch not provided
           searchButtonRef.current?.focus();
-      }
-    }, [onSelect, usage, setCustomerInput]);
+        }
+      },
+      [
+        onSelect,
+        usage,
+        onFetch,
+        dates, // dates object is a dependency
+        setSelectedCustomer,
+        setCustomerError,
+        setCustomerSuggestions,
+        setPopperOpen,
+        setHighlightedIndex,
+      ]
+    );
 
     const handleTriggerFetch = useCallback(() => {
-      const currentCustomer = selectedCustomer;
-      if (!currentCustomer || !currentCustomer.acid) {
-         console.warn("Fetch triggered without a selected customer object.");
-         setCustomerError("Please select a customer first.");
-         return;
+      if (!selectedCustomer?.acid) {
+        setCustomerError("Please select a customer.");
+        return;
       }
       setCustomerError(null);
-
-      if (usage === 'ledger' && onFetch) {
-        console.log("Triggering fetch for ledger...", {
-            acid: currentCustomer.acid,
-            name: currentCustomer.name || "",
-            startDate: dates.startDate,
-            endDate: dates.endDate,
-        });
+      if (usage === "ledger" && onFetch)
         onFetch({
-          acid: currentCustomer.acid,
-          name: currentCustomer.name || "",
+          acid: selectedCustomer.acid,
+          name: selectedCustomer.name || "",
           startDate: dates.startDate,
           endDate: dates.endDate,
         });
-      } else {
-         console.log(`Fetch triggered with usage="${usage}", but onFetch is not defined or usage is not 'ledger'.`);
-      }
-    }, [onFetch, selectedCustomer, dates, usage]);
-
+    }, [onFetch, selectedCustomer, dates, usage, setCustomerError]);
 
     const handleInputKeyDown = useCallback(
       (event) => {
         const { key } = event;
-        const suggestionCount = customerSuggestions.length;
-
-        if (popperOpen && suggestionCount > 0) {
+        const count = customerSuggestions.length;
+        if (popperOpen && count > 0) {
           if (key === "ArrowDown") {
             event.preventDefault();
-            setHighlightedIndex((prevIndex) =>
-              prevIndex < suggestionCount - 1 ? prevIndex + 1 : 0
-            );
+            setHighlightedIndex((prev) => (prev < count - 1 ? prev + 1 : 0));
           } else if (key === "ArrowUp") {
             event.preventDefault();
-            setHighlightedIndex((prevIndex) =>
-              prevIndex > 0 ? prevIndex - 1 : suggestionCount - 1
-            );
+            setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : count - 1));
           } else if (key === "Escape") {
             event.preventDefault();
             setPopperOpen(false);
             setHighlightedIndex(-1);
           } else if (key === "Enter") {
             event.preventDefault();
-            const indexToSelect = highlightedIndex === -1 ? 0 : highlightedIndex;
-            if (suggestionCount > 0 && indexToSelect < suggestionCount && customerSuggestions[indexToSelect]) {
-              handleSuggestionClick(customerSuggestions[indexToSelect]);
-            }
+            if (
+              highlightedIndex !== -1 &&
+              customerSuggestions[highlightedIndex]
+            )
+              handleSuggestionClick(customerSuggestions[highlightedIndex]);
+            else if (count > 0 && customerSuggestions[0])
+              handleSuggestionClick(customerSuggestions[0]);
           }
-        }
-        else if (key === "Enter") {
-             event.preventDefault();
-             if (selectedCustomer) {
-                 if (usage === 'ledger') {
-                    handleTriggerFetch();
-                 }
-             } else if (customerInput && suggestionCount > 0 && customerSuggestions[0]) {
-                 handleSuggestionClick(customerSuggestions[0]);
-             }
-        }
-         else if (
+        } else if (key === "Enter") {
+          event.preventDefault();
+          if (selectedCustomer) {
+            if (usage === "ledger") handleTriggerFetch();
+            else if (onSelect) onSelect(selectedCustomer);
+          } else if (customerInput && count > 0 && customerSuggestions[0])
+            handleSuggestionClick(
+              customerSuggestions[0]
+            ); // Should not happen if auto-select works
+          else if (customerInput && usage === "ledger")
+            setCustomerError("Please select a valid customer.");
+        } else if (
           key === "ArrowDown" &&
           !popperOpen &&
           customerInput &&
-          suggestionCount > 0
+          count > 0
         ) {
           event.preventDefault();
           setPopperOpen(true);
@@ -550,37 +614,30 @@ const LedgerSearchForm = React.memo(
         usage,
         handleSuggestionClick,
         handleTriggerFetch,
+        onSelect,
+        setCustomerError,
       ]
     );
 
-    const handleDateChange = useCallback((e) => {
-      setDates((prevDates) => ({
-        ...prevDates,
-        [e.target.name]: e.target.value,
-      }));
-      setDateRangeType("custom");
-    }, []);
-
+    const handleDateChange = useCallback(
+      (e) => {
+        setDates((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+        setDateRangeType("custom");
+      },
+      [setDates, setDateRangeType]
+    );
     const handleClickAway = useCallback(() => {
-        if (popperOpen) {
-           setPopperOpen(false);
-           setHighlightedIndex(-1);
-        }
+      if (popperOpen) {
+        setPopperOpen(false);
+        setHighlightedIndex(-1);
+      }
     }, [popperOpen]);
-
     const handleInputFocus = useCallback(() => {
-      // Open popper on focus only if there's already input and potentially suggestions or loading.
-      // The main trigger for opening on typing is now handleCustomerInputChange.
-      if (customerInput && (allCustomerOptions.length > 0 || customerLoading || customerSuggestions.length > 0)) {
-        setPopperOpen(true);
-      }
-    }, [customerInput, allCustomerOptions.length, customerLoading, customerSuggestions.length]);
-
-
+      customerInputRef.current?.select();
+      if (customerInput && customerSuggestions.length > 0) setPopperOpen(true);
+    }, [customerInput, customerSuggestions.length]);
     const handleReset = useCallback(() => {
-      if(onReset) {
-          onReset('');
-      }
+      if (onReset) onReset("");
       setSelectedCustomer(null);
       setCustomerInput("");
       setCustomerSuggestions([]);
@@ -588,92 +645,129 @@ const LedgerSearchForm = React.memo(
       setHighlightedIndex(-1);
       setCustomerError(null);
       setDateRangeType("3-Months");
-
-      if (onSelect) {
-        onSelect(null);
-      }
+      if (onSelect) onSelect(null);
       customerInputRef.current?.focus();
-    }, [onSelect, setCustomerInput, onReset]);
-
-    useEffect(() => {
-      if(ID){
-        setCustomerInput('');
-        setSelectedCustomer(null);
-      }
-    },[ID, setCustomerInput, setSelectedCustomer]); // Added setCustomerInput, setSelectedCustomer for correctness
+    }, [
+      onSelect,
+      setCustomerInput,
+      onReset,
+      setSelectedCustomer,
+      setCustomerError,
+      setDateRangeType,
+    ]);
 
     const isSearchButtonDisabled =
       customerLoading ||
       !selectedCustomer ||
-      (masterCustomerList.length === 0 && !token) ||
+      (masterCustomerList.length === 0 && !token && !customerLoading) ||
       !!customerError ||
-      (usage === 'ledger' && (!dates.startDate || !dates.endDate));
-
-    const showInputError = !!customerError;
+      (usage === "ledger" && (!dates.startDate || !dates.endDate));
+    const showInputError = !!customerError && !popperOpen;
 
     return (
       <Box>
-        <Grid container spacing={2} marginY={usage === 'ledger' ? 1 : 1} maxWidth={"xl"} sx={{ width: '100%' }}>
-          <Grid item xs={12} sx={{ overflowX: "hidden", width: "100%" }}>
+        <Grid
+          container
+          spacing={2}
+          marginY={usage === "ledger" ? 2 : 1}
+          maxWidth={"xl"}
+          sx={{ width: "100%" }}
+        >
+          <Grid item xs={12} sx={{ width: "100%" }}>
             <ClickAwayListener onClickAway={handleClickAway}>
               <Box sx={{ position: "relative", width: "100%" }}>
                 <TextField
                   fullWidth
                   variant="outlined"
-                  label="Customer"
-                  value={customerInput}
-                  // ***** THIS IS THE PRIMARY FIX FOR THE POPPER ISSUE *****
+                  placeholder="Customer"
+                  value={customerInput ?? ''}
                   onChange={handleCustomerInputChange}
-                  // ***** END FIX *****
                   inputRef={customerInputRef}
                   onFocus={handleInputFocus}
                   onBlur={() => {
-                     setTimeout(() => { if (document.activeElement !== customerInputRef.current) setPopperOpen(false); }, 150);
+                    setTimeout(() => {
+                      if (
+                        document.activeElement !== customerInputRef.current &&
+                        !listRef.current?.outerRef?.contains(
+                          document.activeElement
+                        )
+                      )
+                        setPopperOpen(false);
+                    }, 150);
                   }}
                   onKeyDown={handleInputKeyDown}
                   error={showInputError}
-                  disabled={(customerLoading && masterCustomerList.length === 0) || disabled}
+                  helperText={showInputError ? customerError : null}
+                  disabled={
+                    (customerLoading &&
+                      masterCustomerList.length === 0 &&
+                      !token) ||
+                    disabled
+                  }
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        {customerLoading && masterCustomerList.length === 0 ? (
+                        {customerLoading &&
+                        masterCustomerList.length === 0 &&
+                        !token ? (
                           <CircularProgress color="inherit" size={20} />
                         ) : (
                           <PersonIcon color="primary" />
                         )}
                       </InputAdornment>
                     ),
-                    endAdornment: (customerInput || selectedCustomer) && (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={handleReset}
-                          edge="end"
-                          size="small"
-                          aria-label="clear input"
-                          disabled={(customerLoading && masterCustomerList.length === 0) || disabled}
-                        >
-                          <RestartAltIcon />
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                    endAdornment: (customerInput || selectedCustomer) &&
+                      !disabled && (
+                        <InputAdornment position="end">
+                          <IconButton
+                            onClick={handleReset}
+                            edge="end"
+                            size="small"
+                            aria-label="clear input"
+                            disabled={
+                              customerLoading &&
+                              masterCustomerList.length === 0 &&
+                              !token
+                            }
+                          >
+                            <RestartAltIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
                   }}
                 />
-               <Popper
-                 open={popperOpen && customerSuggestions.length > 0} // This condition remains the same
-                 anchorEl={customerInputRef.current}
-                 placement="bottom-start"
-                 sx={{
+                <Popper
+                  open={
+                    popperOpen && customerSuggestions.length > 0 && !disabled
+                  }
+                  anchorEl={customerInputRef.current}
+                  placement="bottom-start"
+                  modifiers={[
+                    { name: "flip", enabled: false },
+                    {
+                      name: "preventOverflow",
+                      enabled: true,
+                      options: { boundary: "viewport" },
+                    },
+                  ]}
+                  sx={{
                     zIndex: 1300,
                     width: customerInputRef.current
                       ? `${customerInputRef.current.clientWidth}px`
-                      : '100%',
-                    maxWidth: '100%',
-                    minWidth: '400px',
-                    backgroundColor: 'white',
-                    boxShadow: 3,
+                      : "auto",
+                    minWidth: customerInputRef.current
+                      ? `${Math.max(
+                          300,
+                          customerInputRef.current.clientWidth * 0.8
+                        )}px`
+                      : "300px",
+                    maxWidth: "calc(100vw - 32px)",
                   }}
-               >
-                  <Paper elevation={3} sx={{ maxHeight: 300, overflowY: 'auto' }}>
+                >
+                  <Paper
+                    elevation={3}
+                    sx={{ maxHeight: 300, overflowY: "auto" }}
+                  >
                     <VirtualizedSuggestionsList
                       ref={listRef}
                       data={customerSuggestions}
@@ -684,50 +778,58 @@ const LedgerSearchForm = React.memo(
                 </Popper>
               </Box>
             </ClickAwayListener>
-
             {!customerLoading &&
               masterCustomerList.length === 0 &&
-              !customerError && token && (
+              !customerError &&
+              token && (
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   sx={{ mt: 1, display: "flex", alignItems: "center" }}
                 >
                   <ErrorOutlineIcon fontSize="small" sx={{ mr: 0.5 }} />
-                  No customer data found.
+                  No customer data.
                 </Typography>
               )}
           </Grid>
-
           {usage === "ledger" && (
-            <>
-              <Grid item xs={12}>
-                <FormControl fullWidth variant="outlined">
+            <Grid container item xs={12} spacing={2} alignItems="stretch">
+              <Grid
+                item
+                xs={12}
+                sm={dateRangeType === "custom" ? 12 : 6}
+                md={dateRangeType === "custom" ? 3 : 4}
+              >
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ height: "100%" }}
+                >
                   <InputLabel id="date-range-label">Date Range</InputLabel>
                   <Select
                     labelId="date-range-label"
-                    id="date-range-select"
                     value={dateRangeType}
                     onChange={(e) => setDateRangeType(e.target.value)}
                     label="Date Range"
+                    disabled={disabled}
                     startAdornment={
                       <InputAdornment position="start">
                         <EventIcon color="primary" />
                       </InputAdornment>
                     }
+                    sx={{ height: "100%" }}
                   >
-                    {allowedDateRangeOptions.map((option) => (
-                      <MuiMenuItem key={option.value} value={option.value}>
-                        {option.label}
+                    {allowedDateRangeOptions.map((opt) => (
+                      <MuiMenuItem key={opt.value} value={opt.value}>
+                        {opt.label}
                       </MuiMenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Grid>
-
               {dateRangeType === "custom" && (
                 <>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField
                       fullWidth
                       label="Start Date"
@@ -737,12 +839,18 @@ const LedgerSearchForm = React.memo(
                       value={dates.startDate}
                       onChange={handleDateChange}
                       InputLabelProps={{ shrink: true }}
+                      disabled={disabled}
                       InputProps={{
-                        startAdornment: ( <InputAdornment position="start"> <EventIcon color="action" /> </InputAdornment> ),
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EventIcon color="action" />
+                          </InputAdornment>
+                        ),
                       }}
+                      sx={{ height: "100%" }}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid item xs={12} sm={6} md={3}>
                     <TextField
                       fullWidth
                       label="End Date"
@@ -752,30 +860,47 @@ const LedgerSearchForm = React.memo(
                       value={dates.endDate}
                       onChange={handleDateChange}
                       InputLabelProps={{ shrink: true }}
+                      disabled={disabled}
                       InputProps={{
-                        startAdornment: ( <InputAdornment position="start"> <EventIcon color="action" /> </InputAdornment> ),
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EventIcon color="action" />
+                          </InputAdornment>
+                        ),
                       }}
+                      sx={{ height: "100%" }}
                     />
                   </Grid>
                 </>
               )}
-
-              <Grid item xs={12}>
-                <Divider sx={{ my: 1 }} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                item
+                xs={12}
+                sm={dateRangeType === "custom" ? 6 : 3}
+                md={dateRangeType === "custom" ? 1.5 : 4}
+              >
                 <Button
                   fullWidth
                   variant="outlined"
                   startIcon={<RestartAltIcon />}
                   onClick={handleReset}
-                  disabled={customerLoading && masterCustomerList.length === 0}
+                  disabled={
+                    (customerLoading &&
+                      masterCustomerList.length === 0 &&
+                      !token) ||
+                    disabled
+                  }
                   sx={{ height: "56px" }}
                 >
                   Reset
                 </Button>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid
+                item
+                xs={12}
+                sm={dateRangeType === "custom" ? 6 : 3}
+                md={dateRangeType === "custom" ? 1.5 : 4}
+              >
                 <Button
                   fullWidth
                   variant="contained"
@@ -788,19 +913,18 @@ const LedgerSearchForm = React.memo(
                     )
                   }
                   onClick={handleTriggerFetch}
-                  disabled={isSearchButtonDisabled || ledgerLoading}
+                  disabled={isSearchButtonDisabled || ledgerLoading || disabled}
                   sx={{ height: "56px" }}
                   ref={searchButtonRef}
                 >
                   {ledgerLoading ? "Searching..." : "Search"}
                 </Button>
               </Grid>
-            </>
+            </Grid>
           )}
         </Grid>
       </Box>
     );
   }
 );
-
 export default LedgerSearchForm;

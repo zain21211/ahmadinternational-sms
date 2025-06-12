@@ -5,6 +5,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for navigation
 import axios from "axios";
 import LedgerSearchForm from "./CustomerSearch";
 import { useLocalStorageState } from "./hooks/LocalStorage";
@@ -177,6 +178,7 @@ const expenseStateMap = {
 };
 
   const cashInputRef = useRef(null);
+  const navigate = useNavigate(); // Use navigate for routing
   const acidInputRef = useRef(null);
   const isOnline = useRealOnlineStatus();
 
@@ -281,10 +283,10 @@ const expenseKeys = isOperator
   ]);
 
   const handleReset = useCallback(() => {
-    setAccountID(""); // This will trigger the useEffect above to clear other customer states
+    setAccountID(null); // This will trigger the useEffect above to clear other customer states
     // No need to call setSelectedCustomer, setCustomerName, etc., here directly
     // as the accountID effect handles it.
-    setAcidInput(""); // Also clear the visual input
+    setAcidInput(null); // Also clear the visual input
   }, [setAccountID]);
 
   const handleFetchData = useCallback(
@@ -391,7 +393,14 @@ const expenseKeys = isOperator
 
   useEffect(() => {
     setAcidInput(accountID); // Sync visual input when accountID changes (e.g. from search)
+    console.log("Account ID updated:", accountID);
   }, [accountID]);
+
+    useEffect(() => {
+    console.log("Account ID input:", acidInput);
+  }, [accountID]);
+
+  
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -480,9 +489,11 @@ const expenseKeys = isOperator
     setEasypaisaAmount("");
     setCrownWalletAmount("");
     setMeezanBankAmount("");
-    setSelectedCustomer("")
+    setSelectedCustomer(null)
     setAcidInput("")
-    setAccountID("")
+    setAccountID(null)
+    setCustomerInput(""); // Reset customer input for next search
+
     
     // Reset customer specific fields for next entry
     handleReset(); // Use the reset handler
@@ -646,6 +657,40 @@ const expenseKeys = isOperator
     };
   }}
 
+    const handleLedgerClick = useCallback(() => {
+    if (!selectedCustomer || !selectedCustomer.acid ) {
+      // Maybe show an alert or error message
+      setError("Please select a customer and a date to view the ledger.");
+      return;
+    }
+
+    // Construct URL using selectedCustomer.acid and selectedCustomer.name, and dates
+    // Use selectedDate directly (it's YYYY-MM-DD) for constructing date range for ledger API if needed
+    // The LedgerSearchForm component handles date range calculation internally based on type
+    // But if the ledger page itself needs specific start/end dates, calculate them here.
+    // Based on the previous code, it seems the ledger page uses dates calculated relative to the selectedDate.
+    const endDateObj = new Date();
+    const startDateObj = new Date();
+    startDateObj.setMonth(startDateObj.getMonth() - 3);
+
+    // Format dates as YYYY-MM-DD for the URL params
+    const ledgerStartDate = startDateObj.toISOString().split("T")[0];
+    const ledgerEndDate = endDateObj.toISOString().split("T")[0];
+
+    // Construct the URL for the ledger page
+    const url = `/ledger?name=${encodeURIComponent(
+      selectedCustomer.name || ""
+    )}&acid=${encodeURIComponent(
+      selectedCustomer.acid
+    )}&startDate=${encodeURIComponent(
+      ledgerStartDate
+    )}&endDate=${encodeURIComponent(ledgerEndDate)}`;
+
+    // Use navigate or window.open depending on desired behavior
+    // window.open(url, "_blank"); // Open in new tab
+    navigate(url); // Navigate within the app (might need react-router setup)
+  }, [selectedCustomer, navigate]); // Added navigate dependency
+
   const handleSyncOneEntry = useCallback(async (entryToSync) => {
     if (!isOnline) {
       alert("Cannot sync while offline.");
@@ -756,20 +801,39 @@ const expenseKeys = isOperator
         paddingBottom: 2,
       }}
     >
-      <Box
-        sx={{
-          backgroundColor: isOnline ? "#e0f7fa" : "#ffebee",
-          color: isOnline ? "#006064" : "#b71c1c",
-          padding: 2,
-          borderRadius: 1,
-          mb: 3,
-          textAlign: 'center',
-        }}
-      >
-        <Typography variant="h6" component="h1" gutterBottom>
-          {isOnline ? "Online Mode" : "Offline Mode"}
-        </Typography>
-      </Box>
+              {/* Ledger Button — only if customer is selected */}
+        {selectedCustomer && (
+          <Box
+            sx={{
+              gridColumn: {
+                xs: "span 1", // Half width on xs
+                sm: "span 2",
+                md: "span 2",
+                xl: "span 2",
+              },
+              height: { xs: "56px", sm: "77%" }, // Adjust height for small screens
+            }}
+          >
+            <Button
+              onClick={handleLedgerClick}
+              variant="contained"
+              color="primary"
+              fullWidth
+              sx={{
+                height: "100%", // Make button fill container height
+                transition: "background-color 0.3s, color 0.3s",
+                "&:hover": {
+                  backgroundColor: "primary.dark", // Darker shade on hover
+                  color: "white",
+                  borderColor: "primary.dark",
+                },
+              }}
+            >
+              LEDGER
+            </Button>
+          </Box>
+        )}
+
 
       <Box
         display={"grid"}
@@ -823,7 +887,7 @@ const expenseKeys = isOperator
               fullWidth
               inputRef={acidInputRef}
               onFocus={(e) => e.target.select()}
-              value={acidInput}
+              value={acidInput ?? ""}
               onChange={(e) => setAcidInput(e.target.value)}
               onKeyDown={handleEnterOnAcid}
               inputProps={{ inputMode: "numeric" }}
@@ -1155,7 +1219,7 @@ const expenseKeys = isOperator
 
         </Box>
       </Box>)}
-`
+
       <Button
         variant="contained"
         fullWidth

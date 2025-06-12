@@ -77,10 +77,27 @@ const BillingComponent = ({ name = "INVOICE" }) => {
   const [formattedDate, setFormattedDate] = useState("");
   const buttonRef = useRef(null);
   const { id } = useParams();
+  const [initialAmount, setInitialAmount] = useState(0);
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
     return storedUser ? JSON.parse(storedUser) : null;
+
   });
+
+  useEffect(() => {
+ const freight = customer?.Frieght || 0;
+    const extra = customer?.Extra || 0;
+    const invoiceAmount = customer?.InvoiceAmount || 0;
+    const amount = invoiceAmount - freight + extra;
+
+    if(extra || freight ) {
+    setInitialAmount(amount);
+    } else {
+      setInitialAmount(0);
+    }
+    console.log("Initial Amount:", amount);
+
+  }, [invoice]);
 
   useEffect(() => {
     // console.log("getting the invoice");
@@ -122,6 +139,14 @@ const BillingComponent = ({ name = "INVOICE" }) => {
     return () => clearTimeout(timeoutId); // Cleanup the timeout on unmount
   }, []); // Empty dependency array means this only runs once
 
+  // Define rows first (outside JSX)
+const rows = [
+  ["Amount:", initialAmount],
+  ["FREIGHT:", customer.Frieght],
+  ["EXTRA:", customer.Extra],
+  ["TOTAL AMOUNT:", customer.InvoiceAmount],
+].filter(([, value]) => value > 0); // Only include if value > 0
+
   return (
     <ThemeProvider theme={theme}>
       <Container
@@ -149,33 +174,33 @@ const BillingComponent = ({ name = "INVOICE" }) => {
             </Grid>
 
             <Grid item xs={12} sx={{ width: { xs: "20%" } }}>
-<TextField
-  size="small"
-  label="Date"
-  InputLabelProps={{
-    shrink: true,
-    sx: {
-      backgroundColor: "white",
-    },
-  }}
-  value={
-    customer?.InvoiceDate
-      ? new Date(customer.InvoiceDate)
-          .toLocaleDateString("en-GB")
-          .replace(/\//g, "-")
-      : ""
-  }
-  sx={{
-    '& .MuiOutlinedInput-root': {
-      border: "1px solid black",
-      borderRadius: "1rem",
-    },
-    '& .MuiOutlinedInput-notchedOutline': {
-      border: 'none', // optional: remove double-border effect
-    },
-    outline: "none", // This has no visible effect here
-  }}
-/>
+              <TextField
+                size="small"
+                label="Date"
+                InputLabelProps={{
+                  shrink: true,
+                  sx: {
+                    backgroundColor: "white",
+                  },
+                }}
+                value={
+                  customer?.InvoiceDate
+                    ? new Date(customer.InvoiceDate)
+                        .toLocaleDateString("en-GB")
+                        .replace(/\//g, "-")
+                    : ""
+                }
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    border: "1px solid black",
+                    borderRadius: "1rem",
+                  },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    border: "none", // optional: remove double-border effect
+                  },
+                  outline: "none", // This has no visible effect here
+                }}
+              />
             </Grid>
           </Grid>
 
@@ -309,11 +334,48 @@ const BillingComponent = ({ name = "INVOICE" }) => {
           </Grid>
 
           {/* Totals and Notes */}
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h5" textAlign={"right"}>
-              <strong>Total:</strong> {formatCurrency(customer.InvoiceAmount)}
-            </Typography>
-          </Box>
+<Box
+  sx={{
+    display: "flex",
+    justifyContent: "flex-end",
+    my: "60px",
+    pr: {xs: 1,xl:'65px'}, // shorthand for paddingRight
+  }}
+>
+  <Box
+    sx={{
+      border: "2px solid #ddd",
+      borderRadius: 2,
+      p: 2,
+      minWidth: "300px",
+    }}
+  >
+    {
+    rows.map(([label, value], index, arr) => (
+     <Box
+  key={index}
+  sx={{
+    display: "flex",
+    justifyContent: "space-between",
+    mb: 1,
+    borderBottom: index < rows.length ? "1px solid #ddd" : "none",
+  }}
+>
+  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+    {label}
+  </Typography>
+  <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+    {value}
+  </Typography>
+</Box>
+
+    ))}
+  </Box>
+</Box>
+
+
+
+
 
           {/* Notes Section */}
           <TextField
@@ -350,24 +412,23 @@ const BillingComponent = ({ name = "INVOICE" }) => {
             </Button> */}
           </Box>
           {/* print Order Button */}
-        <Box sx={{ mt: 3, textAlign: "center" }}>
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-             onClick={window.print}
-            // disabled={
-            //   loading || // Disable during loading/posting
-            //   initialDataLoading || // Disable during initial data fetch
-            //   orderItems.length === 0 || // Cannot post empty order
-            //   !selectedCustomer // Must have a selected customer
-            // }
-            sx={{ minWidth: "200px" }}
-          >
-                "Print"
-            
-          </Button>
-        </Box>
+          <Box sx={{ mt: 3, textAlign: "center" }}>
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={window.print}
+              // disabled={
+              //   loading || // Disable during loading/posting
+              //   initialDataLoading || // Disable during initial data fetch
+              //   orderItems.length === 0 || // Cannot post empty order
+              //   !selectedCustomer // Must have a selected customer
+              // }
+              sx={{ minWidth: "200px" }}
+            >
+              Print
+            </Button>
+          </Box>
         </Paper>
       </Container>
     </ThemeProvider>

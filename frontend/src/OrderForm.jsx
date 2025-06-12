@@ -145,6 +145,11 @@ const OrderForm = () => {
     "orderFormCompanyFilter",
     ""
   );
+
+  const [customerInput, setCustomerInput] = useLocalStorageState(
+    "orderFormCustomerInput",
+    ''
+  );// For customer search input
   const [orderItems, setOrderItems] = useLocalStorageState(
     "orderFormOrderItems",
     []
@@ -948,6 +953,7 @@ const BigTextField = styled(TextField)({
       setOverDue(null); // Clear customer financials
       setTotalAmount(0); // Clear derived totals (updates LS)
       setOrderItemsTotalQuantity(0); // Clear derived totals (updates LS)
+      setCustomerInput(null); // Clear customer input text
     } catch (err) {
       console.error(
         "Order creation failed:",

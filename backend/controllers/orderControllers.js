@@ -139,12 +139,8 @@ const orderControllers = {
       // const { date } = products[0]; // Use orderDate defined at the top
       let totalOrderAmount = totalAmount;
 
-<<<<<<< HEAD
 
-      const result = await pool.request()
-=======
        const result = await pool.request()
->>>>>>> 61bd23f4f160e6dd54a335293c91698f91770a11
       .input("doc", sql.Int, nextDoc)
       .query(`SELECT ISNULL(SUM(profit), 0) AS GrossProfit FROM PsProduct WHERE type = 'sale' AND doc = @doc`);
 

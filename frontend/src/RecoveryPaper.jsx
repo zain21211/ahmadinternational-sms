@@ -41,6 +41,20 @@ const LabelWithImage = ({ src, label }) => (
     <span>{label}</span>
   </Box>
 );
+const KNOWN_EXPENSE_METHODS = [
+  "petrol",
+  "entertainment",
+  "bilty",
+  "toll",
+  "repair",
+];
+const expenseLabelMap = {
+  petrol: "Petrol",
+  toll: "Toll",
+  repair: "Repair",
+  entertainment: "Entertainment",
+  bilty: "Bilty",
+};
 
 const formatCurrency = (value) => {
   if (value === "" || value === null || value === undefined) {
@@ -1094,7 +1108,16 @@ const expenseKeys = isOperator
 
       {/* Expenses section */}
       `{!user.userType.toLowerCase().includes("classic") && (
-      <Box sx={{ mt: 4, backgroundColor: "red",color:"white", fontWeight:"bold", p: 2, borderRadius: 3 }}>
+      <Box sx={(theme) => ({
+    mt: 4,
+    backgroundColor: theme.palette.error.main,
+    color: theme.palette.error.contrastText,
+    fontWeight: "bold",
+    p: 2,
+    borderRadius: 3,
+  })}
+      >
+
         <Typography variant="h5" gutterBottom>
          <b> Total Expenses: {formatCurrency(currentTotalExpenses.toFixed(0))}</b>
         </Typography>

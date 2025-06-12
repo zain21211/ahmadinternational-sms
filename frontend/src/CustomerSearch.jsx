@@ -53,7 +53,8 @@ const userTypes = [
 ]
 
 const user = JSON.parse(localStorage.getItem("user"));
-const isAllowed = userTypes.includes(user.userType.toLowerCase())
+const isAllowed = userTypes?.includes(user?.userType?.toLowerCase())
+
 // Predefined date range options
 const dateRangeOptions = [
   { label: "3-Months", value: "3-Months", isAllowed: true },
